@@ -23,7 +23,7 @@ def jsma(model, x, target, nb_epoch=None, delta=1., clip_min=0.,
 
     target = tf.to_int64(target)
     if nb_epoch is None:
-        nb_epoch = tf.constant(50)
+        nb_epoch = tf.constant(100)
 
     def _cond(adv_x, epoch):
         label = tf.argmax(model(adv_x), axis=1)

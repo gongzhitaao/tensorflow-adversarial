@@ -47,17 +47,35 @@ with tf.Session() as sess:
     print('Original test loss: {0:.4f}  acc: {1:.4f}'
           .format(np.mean(lossval), np.mean(accval)))
 
-    print('Construct adversarial images from blank images')
-    blank = np.zeros((1, 784))
-    for i in range(10):
-        adv = sess.run(x_adv, feed_dict={
-            x: blank, target: [i], K.backend.learning_phase(): 0})
-        yval = sess.run(ybar, feed_dict={
-            x: adv, K.backend.learning_phase(): 0})
-        print('Predicted label: {0} ({1:.2f})'
-              .format(np.argmax(yval), np.max(yval)))
+    print('Construct adversarial images')
 
-        # plt.imshow(adv.reshape((28, 28)), cmap='gray')
-        # plt.axis('off')
-        # plt.tight_layout()
-        # plt.savefig('{0}.jpg'.format(i))
+    # Randomly select an image from each category, and modify to any
+    # other classes.
+    labels = np.argmax(y_test, axis=1)
+    for i in range(10):
+        indices, = np.where(i == labels)
+
+        while True:
+            idx = np.random.choice(indices)
+            cand = X_test[idx, np.newaxis]
+            yval = sess.run(ybar, feed_dict={
+                x: cand, K.backend.learning_phase(): 0})
+            if np.argmax(yval) == i:
+                break
+
+        for j in range(10):
+            if j == i:
+                continue
+
+            adv = sess.run(x_adv, feed_dict={
+                x: cand, target: [j], K.backend.learning_phase(): 0})
+            yval = sess.run(ybar, feed_dict={
+                x: adv, K.backend.learning_phase(): 0})
+            yadv = np.argmax(yval)
+            print('Predicted label for {0}: {1} ({2:.2f})'
+                  .format(i, yadv, np.max(yval)))
+
+            plt.imshow(adv.reshape((28, 28)), cmap='gray')
+            plt.axis('off')
+            plt.tight_layout()
+            plt.savefig('org{0}-adv{1}.jpg'.format(i, yadv))
