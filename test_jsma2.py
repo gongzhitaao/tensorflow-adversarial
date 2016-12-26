@@ -64,18 +64,15 @@ with tf.Session() as sess:
                 break
 
         for j in range(10):
-            if j == i:
-                continue
-
             adv = sess.run(x_adv, feed_dict={
                 x: cand, target: [j], K.backend.learning_phase(): 0})
             yval = sess.run(ybar, feed_dict={
                 x: adv, K.backend.learning_phase(): 0})
-            yadv = np.argmax(yval)
             print('Predicted label for {0}: {1} ({2:.2f})'
-                  .format(i, yadv, np.max(yval)))
+                  .format(i, np.argmax(yval), np.max(yval)))
 
             plt.imshow(adv.reshape((28, 28)), cmap='gray')
             plt.axis('off')
             plt.tight_layout()
-            plt.savefig('org{0}-adv{1}.jpg'.format(i, yadv))
+            plt.savefig('{0}-{1}-{2}-{3:.2f}.jpg'
+                        .format(i, j, np.argmax(yval), np.max(yval)))

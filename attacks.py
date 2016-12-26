@@ -42,10 +42,10 @@ def jsma(model, x, target, nb_epoch=None, delta=1., clip_min=0.,
         cond = tf.cond(delta > tf.constant(0.),
                        lambda: adv_x < clip_max-eps,
                        lambda: adv_x > clip_min+eps)
-        scores = dothers_dx - dtarget_dx
+        scores = dtarget_dx - dothers_dx
         mask = tf.where(cond)
         scores = tf.gather_nd(scores, mask)
-        cand = tf.argmin(scores, axis=0)
+        cand = tf.argmax(scores, axis=0)
         pos = tf.gather(mask, cand)
         dx = tf.one_hot([pos[1]], tf.size(adv_x), on_value=delta,
                         off_value=0.)
