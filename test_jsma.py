@@ -5,7 +5,11 @@ import tensorflow as tf
 from utils_mnist import load_mnist
 from utils_mnist import model_mnist_mlp as MLP
 
-from attacks import fgsm
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
+from attacks import jsma
 
 
 print('Loading MNIST')
@@ -30,7 +34,8 @@ with tf.Session() as sess:
     savepath = 'model/mnist_mlp'
     saver.restore(sess, savepath)
 
-    x_adv = fgsm(x, ybar, eps=0.3)
+    target = tf.placeholder(tf.int32, shape=(1,))
+    x_adv = jsma(model, x, target, delta=0.3)
 
     # initialize UN-initialized variables only
     init = tf.variables_initializer(set(tf.global_variables())-tmp)
@@ -42,12 +47,17 @@ with tf.Session() as sess:
     print('Original test loss: {0:.4f}  acc: {1:.4f}'
           .format(np.mean(lossval), np.mean(accval)))
 
-    print('Construct adversarial images')
-    X_adv = sess.run(x_adv, feed_dict={
-        x: X_test, K.backend.learning_phase(): 0})
+    print('Construct adversarial images from blank images')
+    blank = np.zeros((1, 784))
+    for i in range(10):
+        adv = sess.run(x_adv, feed_dict={
+            x: blank, target: [i], K.backend.learning_phase(): 0})
+        yval = sess.run(ybar, feed_dict={
+            x: adv, K.backend.learning_phase(): 0})
+        print('Predicted label: {0} ({1:.2f})'
+              .format(np.argmax(yval), np.max(yval)))
 
-    print('Testing against adversarial test data')
-    accval, lossval = sess.run([acc, loss], feed_dict={
-        x: X_adv, y: y_test, K.backend.learning_phase(): 0})
-    print('Adversarial test loss: {0:.4f}  acc: {1:.4f}'
-          .format(np.mean(lossval), np.mean(accval)))
+        plt.imshow(adv.reshape((28, 28)), cmap='gray')
+        plt.axis('off')
+        plt.tight_layout()
+        plt.savefig('{0}.jpg'.format(i))
