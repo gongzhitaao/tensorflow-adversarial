@@ -34,7 +34,7 @@ def load_mnist(flatten=True, validation_split=None):
     return X_train, y_train, X_test, y_test
 
 
-def model_mnist_mlp():
+def build_mlp():
     model = Sequential()
     model.add(Dense(100, input_dim=784))
     model.add(Activation('relu'))
