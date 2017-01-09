@@ -2,28 +2,46 @@ import os
 import time
 
 import numpy as np
-import keras as K
 import tensorflow as tf
+
+from keras.datasets import mnist
+from keras.models import Sequential
+from keras.layers import Dense, Dropout, Activation
+from keras.utils import np_utils
 
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-from utils_mnist import load_mnist
-from utils_mnist import build_mlp as MLP
-
 from attacks import jsma
 
 
 print('Loading mnist')
-(X_train, y_train,
- X_test, y_test,
- X_val, y_val) = load_mnist(validation_split=0.1)
+(X_train, y_train), (X_test, y_test) = mnist.load_data()
+
+X_train = X_train.astype('float32') / 255.
+X_test = X_test.astype('float32') / 255.
+
+X_train = np.reshape(X_train, (-1, 784))
+X_test = np.reshape(X_test, (-1, 784))
+
+y_train = np.reshape(y_train, (-1, 1))
+y_test = np.reshape(y_test, (-1, 1))
+
+# one hot encoding
+y_train = np_utils.to_categorical(y_train, 10)
+y_test = np_utils.to_categorical(y_test, 10)
+
+validation_split = 0.1
+n = X_train.shape[0]
+nb_samples = int(n * (1-validation_split))
+X_train, X_val = X_train[:nb_samples], X_train[nb_samples:]
+y_train, y_val = y_train[:nb_samples], y_train[nb_samples:]
 
 batch_size = 64
 nb_sample = X_train.shape[0]
 nb_batch = int(nb_sample / batch_size)
-nb_epoch = 10
+nb_epoch = 20
 
 with tf.Session() as sess:
     K.backend.set_session(sess)
@@ -32,9 +50,19 @@ with tf.Session() as sess:
     y = tf.placeholder(tf.float32, shape=(None, 10))
 
     print('Building model')
-    model = MLP()
-    ybar = model(x)
+    model = Sequential()
+    model.add(Dense(512, input_dim=(784,)))
+    model.add(Activation('relu'))
+    model.add(Dropout(0.2))
+    model.add(Dense(512))
+    model.add(Activation('relu'))
+    model.add(Dropout(0.2))
+    model.add(Dense(10))
+    model.add(Activation('softmax'))
 
+    model.summary()
+
+    ybar = model(x)
     acc = K.metrics.categorical_accuracy(y, ybar)
     loss = K.metrics.categorical_crossentropy(y, ybar)
     train_step = tf.train.AdamOptimizer().minimize(loss)
@@ -44,8 +72,6 @@ with tf.Session() as sess:
 
     init = tf.global_variables_initializer()
     sess.run(init)
-
-    info = 'Elapsed {0:.2f}s, loss {1:.4f}, acc {2:.4f}'
 
     print('Training')
     for epoch in range(nb_epoch):
@@ -63,15 +89,16 @@ with tf.Session() as sess:
         tock = time.time()
         accval, lossval = sess.run([acc, loss], feed_dict={
             x: X_val, y: y_val, K.backend.learning_phase(): 0})
-        print(info.format(tock-tick, np.mean(lossval),
-                          np.mean(accval)))
+        print(Elapsed {0:.2f}s, loss {1:.4f}, acc {2:.4f}
+              .format(tock-tick, np.mean(lossval), np.mean(accval)))
 
     print('Testing model accuracy against test data')
     tick = time.time()
     accval, lossval = sess.run([acc, loss], feed_dict={
         x: X_test, y: y_test, K.backend.learning_phase(): 0})
     tock = time.time()
-    print(info.format(tock-tick, np.mean(lossval), np.mean(accval)))
+    print(Elapsed {0:.2f}s, loss {1:.4f}, acc {2:.4f}
+          .format(tock-tick, np.mean(lossval), np.mean(accval)))
 
     print('Construct adversarial images from blank images')
     blank = np.zeros((1, 784))
