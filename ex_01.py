@@ -4,6 +4,7 @@ import time
 import numpy as np
 import tensorflow as tf
 
+import keras as K
 from keras.datasets import mnist
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation
@@ -32,6 +33,7 @@ y_test = np.reshape(y_test, (-1, 1))
 y_train = np_utils.to_categorical(y_train, 10)
 y_test = np_utils.to_categorical(y_test, 10)
 
+# split some validation data from training data
 validation_split = 0.1
 n = X_train.shape[0]
 nb_samples = int(n * (1-validation_split))
@@ -51,7 +53,7 @@ with tf.Session() as sess:
 
     print('Building model')
     model = Sequential()
-    model.add(Dense(512, input_dim=(784,)))
+    model.add(Dense(512, input_dim=784))
     model.add(Activation('relu'))
     model.add(Dropout(0.2))
     model.add(Dense(512))
@@ -59,8 +61,6 @@ with tf.Session() as sess:
     model.add(Dropout(0.2))
     model.add(Dense(10))
     model.add(Activation('softmax'))
-
-    model.summary()
 
     ybar = model(x)
     acc = K.metrics.categorical_accuracy(y, ybar)
@@ -89,7 +89,7 @@ with tf.Session() as sess:
         tock = time.time()
         accval, lossval = sess.run([acc, loss], feed_dict={
             x: X_val, y: y_val, K.backend.learning_phase(): 0})
-        print(Elapsed {0:.2f}s, loss {1:.4f}, acc {2:.4f}
+        print('Elapsed {0:.2f}s, loss {1:.4f}, acc {2:.4f}'
               .format(tock-tick, np.mean(lossval), np.mean(accval)))
 
     print('Testing model accuracy against test data')
@@ -97,7 +97,7 @@ with tf.Session() as sess:
     accval, lossval = sess.run([acc, loss], feed_dict={
         x: X_test, y: y_test, K.backend.learning_phase(): 0})
     tock = time.time()
-    print(Elapsed {0:.2f}s, loss {1:.4f}, acc {2:.4f}
+    print('Elapsed {0:.2f}s, loss {1:.4f}, acc {2:.4f}'
           .format(tock-tick, np.mean(lossval), np.mean(accval)))
 
     print('Construct adversarial images from blank images')
