@@ -23,12 +23,11 @@ def jsma(model, x, target, nb_epoch=None, delta=1., clip_min=0.,
          clip_max=1.):
 
     if nb_epoch is None:
-        nb_epoch = tf.constant(30)
+        nb_epoch = tf.floor_div(tf.size(x), 20)
 
     def _cond(adv_x, epoch):
         ybar = tf.reshape(model(adv_x), [-1])
-        label = tf.to_int32(tf.argmax(ybar, axis=0))
-        return tf.logical_and(tf.not_equal(label, target),
+        return tf.logical_and(tf.less(ybar[target], 0.9),
                               tf.less(epoch, nb_epoch))
 
     def _body(adv_x, epoch):
@@ -79,7 +78,7 @@ def jsma(model, x, target, nb_epoch=None, delta=1., clip_min=0.,
              tf.one_hot(j, nb_input, on_value=delta, off_value=0.)
         dx = tf.expand_dims(dx, axis=0)
 
-        adv_x = adv_x + dx
+        adv_x = tf.stop_gradient(adv_x + dx)
 
         if (clip_min is not None) and (clip_max is not None):
             adv_x = tf.clip_by_value(adv_x, clip_min, clip_max)

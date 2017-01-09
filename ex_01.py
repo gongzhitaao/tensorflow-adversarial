@@ -1,11 +1,13 @@
 import os
 import time
-import gzip
-import pickle
 
 import numpy as np
 import keras as K
 import tensorflow as tf
+
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 from utils_mnist import load_mnist
 from utils_mnist import build_mlp as MLP
@@ -21,7 +23,7 @@ print('Loading mnist')
 batch_size = 64
 nb_sample = X_train.shape[0]
 nb_batch = int(nb_sample / batch_size)
-nb_epoch = 20
+nb_epoch = 10
 
 with tf.Session() as sess:
     K.backend.set_session(sess)
@@ -64,7 +66,7 @@ with tf.Session() as sess:
         print(info.format(tock-tick, np.mean(lossval),
                           np.mean(accval)))
 
-    print('Testing against original test data')
+    print('Testing model accuracy against test data')
     tick = time.time()
     accval, lossval = sess.run([acc, loss], feed_dict={
         x: X_test, y: y_test, K.backend.learning_phase(): 0})
@@ -85,6 +87,11 @@ with tf.Session() as sess:
         print('Elapsed {0:.2f}s label {1} ({2:.2f})'
               .format(tock-tick, np.argmax(yval), np.max(yval)))
 
+    print('Saving figures')
     os.makedirs('data', exist_ok=True)
-    with gzip.open('data/digits.pkl.gz', 'wb') as w:
-        pickle.dump(digits.tolist(), w)
+    for i, adv in enumerate(digits):
+        img = np.reshape(adv, (28, 28))
+        plt.imshow(img, cmap='gray', interpolation='none')
+        plt.axis('off')
+        plt.tight_layout()
+        plt.savefig('data/{0}.jpg'.format(i))
