@@ -22,6 +22,7 @@ def fgsm(x, ybar, eps=0.1, clip_min=0., clip_max=1.):
 def jsma(model, x, target, nb_epoch=None, delta=1., clip_min=0.,
          clip_max=1.):
 
+    # nrow * ncol * gamma / 2, gamma default 0.1
     if nb_epoch is None:
         nb_epoch = tf.floor_div(tf.size(x), 20)
 
@@ -44,6 +45,13 @@ def jsma(model, x, target, nb_epoch=None, delta=1., clip_min=0.,
         dt_dx, = tf.gradients(yt, adv_x)
         do_dx, = tf.gradients(yo, adv_x)
 
+        # The original paper (https://arxiv.org/abs/1511.07528) says
+        # very few pixels satisfy the saliency criteria.  So the
+        # authors workaround by finding a pair of pixels instead.  The
+        # following code generates combination(nb_input, 2) by
+        # meshgrid.  E.g., given nb_input=4, the ind will be [[0,1],
+        # [0,2], [0,3], [1,2], [1,3], [2,3]], which serves as indices
+        # to gradient values.
         ind = tf.range(nb_input)
         mask = tf.cond(tf.less(delta, 0.),
                        lambda: tf.greater(adv_x, clip_min),
