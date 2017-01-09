@@ -1,9 +1,0 @@
-__pycache__/
-*~
-.git/
-.gitignore
-model/
-*.jpg
-*.txt
-LICENSE
-Makefile
