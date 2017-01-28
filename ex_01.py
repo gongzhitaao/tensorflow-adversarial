@@ -156,5 +156,6 @@ for i in range(10):
         if ax.is_last_row():
             ax.set_xlabel(j, fontsize=20)
 
+gs.tight_layout(fig)
 os.makedirs('img', exist_ok=True)
 plt.savefig('img/ex_01.png')
