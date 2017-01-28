@@ -1,8 +1,8 @@
 import tensorflow as tf
 
 
-def jsma2(model, x, target, nb_epoch=None, delta=1., clip_min=0.,
-          clip_max=1.):
+def smda(model, x, target, nb_epoch=None, delta=1., clip_min=0.,
+         clip_max=1.):
 
     if nb_epoch is None:
         nb_epoch = tf.floor_div(tf.size(x), 20)
@@ -37,7 +37,7 @@ def jsma2(model, x, target, nb_epoch=None, delta=1., clip_min=0.,
         p = tf.gather(ind, p)
         p = tf.expand_dims(p, axis=0)
         p = tf.to_int32(p)
-        dx = tf.scatter_nd(p, [1.0], tf.shape(x_adv))
+        dx = tf.scatter_nd(p, [delta], tf.shape(x_adv))
 
         x_adv = tf.stop_gradient(x_adv + dx)
 
@@ -51,5 +51,4 @@ def jsma2(model, x, target, nb_epoch=None, delta=1., clip_min=0.,
     x_adv = tf.identity(x)
     epoch = tf.Variable(0, tf.int32)
     x_adv, epoch = tf.while_loop(_cond, _body, (x_adv, epoch))
-
     return x_adv
