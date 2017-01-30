@@ -20,20 +20,31 @@ All return a Tensorflow operation which could be run through
 
 ## Fun Examples ##
 
-- [**ex_01.py**](./ex_00.py) trains a simple CNN on MNIST, achieving
+- [**ex_00.py**](./ex_00.py) trains a simple CNN on MNIST, achieving
   accuracy ~99%.  Then craft with FGSM adversarial samples from test
   data, of which the CNN accuracy drops to ~30% depending on your
   choice of `eps`.
 
-- [**ex_01.py**](./ex_01.py) creates cross label adversarial images.
-  For each row, the digit in green frame is the natural one based on
-  which others are created.
+- [**ex_01.py**](./ex_01.py) creates cross label adversarial images
+  via saliency map algorithm (JSMA), left image.  For each row, the
+  digit in green frame is the natural one based on which others are
+  created.
 
-    ![ex_01](./img/ex_01.png?raw=true "cross label adversarial")
+    <img src="./img/ex_01.png" width="40%">
+    <img src="./img/ex_02.png" width="40%">
 
-- [**ex_02.py**](./ex_02.py) creates digits from blank images.
+- [**ex_02.py**](./ex_02.py) creates cross label adversarial images
+  via paired saliency map algorithm (JSMA2), right image.
 
-    ![ex_02](./img/ex_02.png?raw=true "digits from scratch")
+- [**ex_03.py**](./ex_03.py) creates digits from blank images via
+  saliency different algorithm (SMDA).
+
+    ![ex_03](./img/ex_03.png?raw=true "digits from scratch")
+
+- [**ex_04.py**](./ex_04.py) creates digits from blank images via
+  paired saliency map algorithm (JSMA2).
+
+    ![ex_04](./img/ex_04.png?raw=true "digits from scratch")
 
 ## Related Work ##
 
