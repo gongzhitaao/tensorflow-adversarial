@@ -114,13 +114,13 @@ def jsma2(model, x, target, nb_epoch=None, delta=1., clip_min=0.,
             # the gradient of each pair is the sum of individuals
             t, o = ti+tj, oi+oj
 
-            # saliency score
-            score = -t * o
-
             # increase target probability while decrease others
             c = tf.where(tf.logical_and(t>=0, o<=0))
-            score = tf.gather_nd(score, c)
+            t, o = tf.gather_nd(t, c), tf.gather_nd(o, c)
             ii, jj = tf.gather_nd(ii, c), tf.gather_nd(jj, c)
+
+            # saliency score
+            score = -t * o
 
             # find the max pair in current batch
             p = tf.argmax(score, axis=0)

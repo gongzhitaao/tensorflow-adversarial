@@ -6,17 +6,16 @@ three
 [adversarial image](http://karpathy.github.io/2015/03/30/breaking-convnets/) crafting
 algorithms with Tensorflow.
 
-- [Fast gradient sign method (FGSM)](https://arxiv.org/abs/1412.6572)
-- [Jacobian-based saliency map approach (JSMA)](https://arxiv.org/abs/1511.07528)
-- Difference saliency map approach
+- [Fast Gradient Sign Method (FGSM)](https://arxiv.org/abs/1412.6572)
+- [Jacobian-based Saliency Map Approach (JSMA)](https://arxiv.org/abs/1511.07528)
+- [Least-Likely Class Method (LLCM)](https://arxiv.org/abs/1607.02533)
+- Saliency map difference approach (SMDA)
 
 ## Code ##
 
 The three attacking algorithms can be found
-in
-[**attacks.py**](https://github.com/gongzhitaao/tensorflow-adversarial/blob/master/attacks.py).
-All return a Tensorflow operation which could be run through
-`sess.run(...)`.
+in [**attacks**](./attacks) folder.  All return a Tensorflow operation
+which could be run through `sess.run(...)`.
 
 ## Fun Examples ##
 
