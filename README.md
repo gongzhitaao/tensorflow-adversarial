@@ -49,6 +49,15 @@ folder.  All return a Tensorflow operation which could be run through
 
     ![ex_04](./img/ex_04.png?raw=true "digits from scratch")
 
+- [**ex_00.py**](./ex_00.py) trains a simple CNN on MNIST, achieving
+  accuracy ~99%.  Then craft with LLCM adversarial samples from test
+  data, of which the CNN accuracy drops to 0% depending on your choice
+  of `eps` and `nb_epoch`.  The original label for the following
+  digits are 0 through 9 originally, and the predicted label with
+  probability are shown below each digit.
+
+    ![ex_05](./img/ex_05.png?raw=true "llcm digits")
+
 ## Related Work ##
 
 - [openai/cleverhans](https://github.com/openai/cleverhans)
