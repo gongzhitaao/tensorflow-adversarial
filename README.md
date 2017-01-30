@@ -6,7 +6,7 @@ four
 [adversarial image](http://karpathy.github.io/2015/03/30/breaking-convnets/) crafting
 algorithms with Tensorflow.
 
-- [Fast Gradient Sign Method (FGSM)](https://arxiv.org/abs/1412.6572)
+- Fast Gradient Sign Method (FGSM) [basic](https://arxiv.org/abs/1412.6572)/[iterative](https://arxiv.org/abs/1607.02533)
 - [Jacobian-based Saliency Map Approach (JSMA)](https://arxiv.org/abs/1511.07528)
 - [Least-Likely Class Method (LLCM)](https://arxiv.org/abs/1607.02533)
 - Saliency map difference approach (SMDA)
