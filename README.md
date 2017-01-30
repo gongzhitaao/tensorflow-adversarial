@@ -1,21 +1,43 @@
 Adversarial Attack with Tensorflow
 ==================================
 
-I implemented
-four
-[adversarial image](http://karpathy.github.io/2015/03/30/breaking-convnets/) crafting
-algorithms with Tensorflow.
+## API ##
 
-- Fast Gradient Sign Method (FGSM) [basic](https://arxiv.org/abs/1412.6572)/[iterative](https://arxiv.org/abs/1607.02533)
+Four
+[adversarial image](http://karpathy.github.io/2015/03/30/breaking-convnets/) crafting
+algorithms are implemented with Tensorflow.  The four attacking
+algorithms can be found in [**attacks**](./attacks) folder.  They all
+return a Tensorflow operation which could be run through
+`sess.run(...)`.
+
+- Fast Gradient Sign Method
+  (FGSM)
+  [basic](https://arxiv.org/abs/1412.6572)/[iterative](https://arxiv.org/abs/1607.02533)
+
+    ```python
+    fgsm(model, x, y, eps=0.01, nb_epoch=1, clip_min=0., clip_max=1.)
+    ```
+
 - [Jacobian-based Saliency Map Approach (JSMA)](https://arxiv.org/abs/1511.07528)
+
+    ```python
+    jsma(model, x, target, nb_epoch=None, delta=1., clip_min=0., clip_max=1.)
+    jsma2(model, x, target, nb_epoch=None, delta=1., clip_min=0., clip_max=1.)
+    ```
+
+    `jsma2` choose a pair of pixels to change at one time.
+
 - [Least-Likely Class Method (LLCM)](https://arxiv.org/abs/1607.02533)
+
+    ```python
+    llcm(model, x, nb_epoch=1, eps=0.01, clip_min=0., clip_max=1.)
+    ```
+
 - Saliency map difference approach (SMDA)
 
-## Code ##
-
-The four attacking algorithms can be found in [**attacks**](./attacks)
-folder.  All return a Tensorflow operation which could be run through
-`sess.run(...)`.
+    ```python
+    smda(model, x, target, nb_epoch=None, delta=1., clip_min=0., clip_max=1.)
+    ```
 
 ## Fun Examples ##
 
