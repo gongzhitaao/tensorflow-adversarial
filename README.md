@@ -2,7 +2,7 @@ Adversarial Attack with Tensorflow
 ==================================
 
 I implemented
-three
+four
 [adversarial image](http://karpathy.github.io/2015/03/30/breaking-convnets/) crafting
 algorithms with Tensorflow.
 
@@ -13,16 +13,20 @@ algorithms with Tensorflow.
 
 ## Code ##
 
-The three attacking algorithms can be found
-in [**attacks**](./attacks) folder.  All return a Tensorflow operation
-which could be run through `sess.run(...)`.
+The four attacking algorithms can be found in [**attacks**](./attacks)
+folder.  All return a Tensorflow operation which could be run through
+`sess.run(...)`.
 
 ## Fun Examples ##
 
 - [**ex_00.py**](./ex_00.py) trains a simple CNN on MNIST, achieving
   accuracy ~99%.  Then craft with FGSM adversarial samples from test
-  data, of which the CNN accuracy drops to ~30% depending on your
-  choice of `eps`.
+  data, of which the CNN accuracy drops to 0% depending on your choice
+  of `eps` and `nb_epoch`.  The original label for the following
+  digits are 0 through 9 originally, and the predicted label with
+  probability are shown below each digit.
+
+    ![ex_00](./img/ex_00.png?raw=true "fgsm digits")
 
 - [**ex_01.py**](./ex_01.py) creates cross label adversarial images
   via saliency map algorithm (JSMA), left image.  For each row, the
