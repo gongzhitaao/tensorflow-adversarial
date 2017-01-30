@@ -30,8 +30,8 @@ All return a Tensorflow operation which could be run through
   digit in green frame is the natural one based on which others are
   created.
 
-    <img src="./img/ex_01.png" width="40%">
-    <img src="./img/ex_02.png" width="40%">
+    <img src="./img/ex_01.png" width="50%">
+    <img src="./img/ex_02.png" width="50%">
 
 - [**ex_02.py**](./ex_02.py) creates cross label adversarial images
   via paired saliency map algorithm (JSMA2), right image.
