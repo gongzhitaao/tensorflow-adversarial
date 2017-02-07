@@ -213,7 +213,7 @@ for i in range(10):
     ax.set_xticks([])
     ax.set_yticks([])
     ax.set_xlabel('{0}\n{1:.2f}'.format(labels[z_tmp[i]], y_tmp[i]),
-                  fontsize=8)
+                  fontsize=12)
 
 gs.tight_layout(fig)
 os.makedirs('img', exist_ok=True)
