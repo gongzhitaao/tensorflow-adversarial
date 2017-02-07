@@ -24,8 +24,8 @@ from attacks.jsma import jsma2
 print('Loading mnist')
 (X_train, y_train), (X_test, y_test) = mnist.load_data()
 
-X_train = X_train.astype('float32') / 255.
-X_test = X_test.astype('float32') / 255.
+X_train = X_train.astype('float32') / 255
+X_test = X_test.astype('float32') / 255
 
 # assume K.image_dim_ordering() == 'tf'
 X_train = X_train.reshape(-1, 28, 28, 1)
@@ -77,7 +77,7 @@ x = tf.placeholder(tf.float32, (None, 28, 28, 1))
 y = tf.placeholder(tf.float32, (None, 10))
 ybar = model(x)
 target = tf.placeholder(tf.int32, ())
-x_adv = jsma2(model, x, target)
+x_adv = jsma2(model, x, target, delta=1.)
 
 
 print('Testing...')

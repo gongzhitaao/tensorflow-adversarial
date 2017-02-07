@@ -63,17 +63,14 @@ def jsma2(model, x, target, nb_epoch=None, delta=1., clip_min=0.,
         nb_epoch = tf.floor_div(tf.size(x), 20)
 
     def _cond(x_adv, epoch):
-        ybar = tf.reshape(model(x_adv), [-1])
-        return tf.logical_and(tf.less(ybar[target], 0.9),
+        y = tf.reshape(model(x_adv), [-1])
+        return tf.logical_and(tf.less(y[target], 0.9),
                               tf.less(epoch, nb_epoch))
 
     def _body(x_adv, epoch):
         y = model(x_adv)
 
-        nb_input = tf.size(x_adv)
-        nb_output = tf.size(y)
-
-        mask = tf.one_hot(target, nb_output, on_value=True,
+        mask = tf.one_hot(target, tf.size(y), on_value=True,
                           off_value=False)
         mask = tf.expand_dims(mask, axis=0)
         yt = tf.boolean_mask(y, mask)
@@ -120,23 +117,23 @@ def jsma2(model, x, target, nb_epoch=None, delta=1., clip_min=0.,
             ii, jj = tf.gather_nd(ii, c), tf.gather_nd(jj, c)
 
             # saliency score
-            score = -t * o
+            score = tf.multiply(t, -o)
 
             # find the max pair in current batch
             p = tf.argmax(score, axis=0)
             v = tf.reduce_max(score, axis=0)
-
             i, j = tf.gather(ii, p), tf.gather(jj, p)
             i, j = tf.to_int32(i), tf.to_int32(j)
+
             i0, j0, v0 = tf.cond(tf.greater(v, v0),
                                  lambda: (i, j, v),
                                  lambda: (i0, j0, v0))
             start += batch_size
             return i0, j0, v0, start
 
-        i = tf.to_int32(tf.gather_nd(ind, [0]))
-        j = tf.to_int32(tf.gather_nd(ind, [1]))
-        v = tf.Variable(0.)
+        i = tf.to_int32(tf.gather(ind, 0))
+        j = tf.to_int32(tf.gather(ind, 0))
+        v = tf.Variable(-1.)
         start = tf.Variable(0)
 
         # Find max saliency pair in batch.  Naive iteration through
