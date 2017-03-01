@@ -33,12 +33,6 @@ jsma2(model, x, target, nb_epoch=None, delta=1., clip_min=0., clip_max=1.)
 
     `jsma2` choose a pair of pixels to change at one time.
 
-- [Least-Likely Class Method (LLCM)](https://arxiv.org/abs/1607.02533)
-
-    ```python
-llcm(model, x, nb_epoch=1, eps=0.01, clip_min=0., clip_max=1.)
-    ```
-
 - Saliency map difference approach (SMDA)
 
     ```python
