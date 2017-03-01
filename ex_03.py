@@ -1,4 +1,8 @@
 import os
+
+# supress tensorflow logging other than errors
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
 import time
 import gzip
 import pickle
@@ -86,7 +90,7 @@ score = model.evaluate(X_test, y_test)
 print('\nloss: {0:.4f} acc: {1:.4f}'.format(score[0], score[1]))
 
 
-saved = True
+saved = False
 
 if saved:
     with gzip.open('data/ex_03.pkl.gz', 'rb') as r:

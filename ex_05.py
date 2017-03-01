@@ -18,7 +18,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
-from attacks.llcm import llcm
+from attacks.fgsm import fgsm
 
 
 print('Loading mnist')
@@ -74,7 +74,7 @@ else:
 
 x = tf.placeholder(tf.float32, shape=(None, 28, 28, 1))
 y = tf.placeholder(tf.float32, shape=(None, 10))
-x_adv = llcm(model, x, nb_epoch=4, eps=0.1)
+x_adv = fgsm(model, x, y='min', nb_epoch=4, eps=0.1)
 
 
 print('Testing...')

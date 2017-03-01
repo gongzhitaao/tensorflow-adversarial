@@ -34,7 +34,7 @@ img_rows = 32
 img_cols = 32
 
 model_saved = True
-adv_saved = True
+adv_saved = False
 
 
 (X_train, y_train), (X_test, y_test) = cifar10.load_data()
@@ -141,7 +141,7 @@ x = tf.placeholder(tf.float32, shape=(None, img_rows, img_cols,
                                       img_channels))
 y = tf.placeholder(tf.float32, shape=(None, nb_classes))
 eps = tf.placeholder(tf.float32, ())
-x_adv = fgsm(model, x, y, nb_epoch=4, eps=0.01)
+x_adv = fgsm(model, x, y='max', nb_epoch=4, eps=0.01)
 
 
 print('Testing...')

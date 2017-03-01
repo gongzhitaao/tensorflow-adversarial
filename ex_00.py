@@ -74,7 +74,7 @@ else:
 
 x = tf.placeholder(tf.float32, shape=(None, 28, 28, 1))
 y = tf.placeholder(tf.float32, shape=(None, 10))
-x_adv = fgsm(model, x, y, nb_epoch=4, eps=0.1)
+x_adv = fgsm(model, x, y='max', nb_epoch=3, eps=0.1)
 
 
 print('Testing...')

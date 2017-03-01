@@ -18,6 +18,12 @@ return a Tensorflow operation which could be run through
     fgsm(model, x, y, eps=0.01, nb_epoch=1, clip_min=0., clip_max=1.)
     ```
 
+  `y` takes a couple of values:
+  - `'max'` denotes using the model predicted result,
+  - `'min'` denotes least-likely method,
+  - an integer means the target category,
+  - a list of integers means target category for each sample.
+
 - [Jacobian-based Saliency Map Approach (JSMA)](https://arxiv.org/abs/1511.07528)
 
     ```python
