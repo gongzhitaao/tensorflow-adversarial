@@ -15,7 +15,7 @@ return a Tensorflow operation which could be run through
   [basic](https://arxiv.org/abs/1412.6572)/[iterative](https://arxiv.org/abs/1607.02533)
 
     ```python
-    fgsm(model, x, y, eps=0.01, nb_epoch=1, clip_min=0., clip_max=1.)
+fgsm(model, x, y, eps=0.01, nb_epoch=1, clip_min=0., clip_max=1.)
     ```
 
   `y` takes a couple of values:
@@ -27,8 +27,8 @@ return a Tensorflow operation which could be run through
 - [Jacobian-based Saliency Map Approach (JSMA)](https://arxiv.org/abs/1511.07528)
 
     ```python
-    jsma(model, x, target, nb_epoch=None, delta=1., clip_min=0., clip_max=1.)
-    jsma2(model, x, target, nb_epoch=None, delta=1., clip_min=0., clip_max=1.)
+jsma(model, x, target, nb_epoch=None, delta=1., clip_min=0., clip_max=1.)
+jsma2(model, x, target, nb_epoch=None, delta=1., clip_min=0., clip_max=1.)
     ```
 
     `jsma2` choose a pair of pixels to change at one time.
@@ -36,13 +36,13 @@ return a Tensorflow operation which could be run through
 - [Least-Likely Class Method (LLCM)](https://arxiv.org/abs/1607.02533)
 
     ```python
-    llcm(model, x, nb_epoch=1, eps=0.01, clip_min=0., clip_max=1.)
+llcm(model, x, nb_epoch=1, eps=0.01, clip_min=0., clip_max=1.)
     ```
 
 - Saliency map difference approach (SMDA)
 
     ```python
-    smda(model, x, target, nb_epoch=None, delta=1., clip_min=0., clip_max=1.)
+smda(model, x, target, nb_epoch=None, delta=1., clip_min=0., clip_max=1.)
     ```
 
 ## Fun Examples ##
