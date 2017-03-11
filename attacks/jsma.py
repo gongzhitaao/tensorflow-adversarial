@@ -1,86 +1,138 @@
 import tensorflow as tf
 
 
-def jsma(model, x, target, nb_epoch=None, delta=1., clip_min=0.,
-         clip_max=1.):
+def jsma(model, x, y, nb_epoch=None, max_distort=1., eps=1.,
+         clip_min=0.0, clip_max=1.0, pair=False, min_proba=0.):
+    xshape = tf.shape(x)
+    n = xshape[0]
+    target = tf.cond(tf.equal(0, tf.rank(y)),
+                     lambda: tf.zeros([n], dtype=tf.int32)+y,
+                     lambda: y)
+
+    if pair:
+        _jsma_fn = _jsma2_impl
+    else:
+        _jsma_fn = _jsma_impl
+
+    def _fn(i):
+        # `xi` is of the shape (1, ....), the first dimension is the
+        # number of samples, 1 in this case.  `yi` is just a scalar,
+        # denoting the target class index.
+        xi = tf.gather(x, [i])
+        yi = tf.gather(target, i)
+
+        # `xadv` is of the shape (1, ...), same as xi.
+        xadv = _jsma_fn(model, xi, yi, nb_epoch=nb_epoch,
+                        max_distort=max_distort, eps=eps,
+                        clip_min=clip_min, clip_max=clip_max,
+                        min_proba=min_proba)
+        return xadv[0]
+
+    return tf.map_fn(_fn, tf.range(n), dtype=tf.float32,
+                     back_prop=False, name='jsma_batch')
+
+
+def _jsma_impl(model, xi, yi, nb_epoch=None, max_distort=1., eps=1.,
+               clip_min=0., clip_max=1., min_proba=0.):
 
     if nb_epoch is None:
-        nb_epoch = tf.floor_div(tf.size(x), 20)
+        n = tf.to_float(tf.size(xi)) * max_distort
+        nb_epoch = tf.to_int32(tf.floor(n))
 
-    def _cond(x_adv, epoch):
+    def _cond(x_adv, epoch, pixel_mask):
         ybar = tf.reshape(model(x_adv), [-1])
-        return tf.logical_and(tf.less(ybar[target], 0.9),
-                              tf.less(epoch, nb_epoch))
+        proba = ybar[yi]
+        label = tf.to_int32(tf.argmax(ybar, axis=0))
+        return tf.reduce_all([tf.less(epoch, nb_epoch),
+                              tf.reduce_any(pixel_mask),
+                              tf.logical_or(tf.not_equal(yi, label),
+                                            tf.less(proba, min_proba))],
+                             name='_jsma_step_cond')
 
-    def _body(x_adv, epoch):
-        y = model(x_adv)
+    def _body(x_adv, epoch, pixel_mask):
+        ybar = model(x_adv)
 
-        nb_input = tf.size(x_adv)
-        nb_output = tf.size(y)
+        y_target = tf.slice(ybar, [0, yi], [-1, 1])
+        dy_dx, = tf.gradients(ybar, x_adv, name='dy_dx')
 
-        mask = tf.one_hot(target, nb_output, on_value=True,
-                          off_value=False)
-        mask = tf.expand_dims(mask, axis=0)
-        yt = tf.boolean_mask(y, mask)
-        yo = tf.boolean_mask(y, tf.logical_not(mask))
-        dt_dx, = tf.gradients(yt, x_adv)
-        do_dx, = tf.gradients(yo, x_adv)
+        dt_dx, = tf.gradients(y_target, x_adv, name='dt_dx')
+        do_dx = tf.subtract(dy_dx, dt_dx, name='do_dx')
+        score = tf.multiply(dt_dx, -do_dx, name='saliency_score')
 
-        score = -dt_dx * do_dx
+        pixel_domain = tf.logical_and(
+            pixel_mask,
+            tf.logical_and(dt_dx>=0, do_dx<=0,
+                           name='saliency_heuristic'))
 
-        cond1 = tf.cond(delta > tf.constant(0.),
-                        lambda: x_adv < clip_max,
-                        lambda: x_adv > clip_min)
-        cond2 = tf.logical_and(dt_dx > 0, do_dx < 0)
-        ind = tf.where(tf.logical_and(cond1, cond2))
+        # ensure that pixel_domain is not empty
+        pixel_domain = tf.cond(tf.reduce_any(pixel_domain),
+                               lambda: pixel_domain,
+                               lambda: tf.logical_and(pixel_mask,
+                                                      dt_dx>=0))
 
+        ind = tf.where(pixel_domain)
         score = tf.gather_nd(score, ind)
 
         p = tf.argmax(score, axis=0)
         p = tf.gather(ind, p)
         p = tf.expand_dims(p, axis=0)
         p = tf.to_int32(p)
-        dx = tf.scatter_nd(p, [delta], tf.shape(x_adv))
+        dx = tf.scatter_nd(p, [eps], tf.shape(x_adv), name='dx')
 
         x_adv = tf.stop_gradient(x_adv + dx)
-
-        if (clip_min is not None) and (clip_max is not None):
-            x_adv = tf.clip_by_value(x_adv, clip_min, clip_max)
-
         epoch += 1
+        pixel_mask = tf.cond(tf.greater(eps, 0.),
+                             lambda: tf.less(x_adv, clip_max),
+                             lambda: tf.greater(x_adv, clip_min))
 
-        return x_adv, epoch
+        return x_adv, epoch, pixel_mask
 
     epoch = tf.Variable(0, tf.int32)
-    x_adv, epoch = tf.while_loop(_cond, _body, (x, epoch))
+    x_adv = tf.identity(xi)
+    pixel_mask = tf.cond(tf.greater(eps, 0),
+                         lambda: tf.less(xi, clip_max),
+                         lambda: tf.greater(xi, clip_min))
+
+    x_adv, _, _ = tf.while_loop(_cond, _body,
+                                (x_adv, epoch, pixel_mask),
+                                back_prop=False, name='jsma_step')
+    x_adv = tf.clip_by_value(x_adv, clip_min, clip_max)
+
     return x_adv
 
 
-def jsma2(model, x, target, nb_epoch=None, delta=1., clip_min=0.,
-          clip_max=1.):
+def _jsma2_impl(model, xi, yi, nb_epoch=None, eps=1.0, clip_min=0.0,
+                clip_max=1.0, min_proba=0.):
+
+    nb_pixels = tf.size(xi)
 
     if nb_epoch is None:
-        nb_epoch = tf.floor_div(tf.size(x), 20)
+        nb_epoch = tf.floor_div(nb_pixels, 2)
 
-    def _cond(x_adv, epoch):
-        y = tf.reshape(model(x_adv), [-1])
-        return tf.logical_and(tf.less(y[target], 0.9),
-                              tf.less(epoch, nb_epoch))
+    def _cond(x_adv, epoch, pixels_left):
+        ybar = tf.reshape(model(x_adv), [-1])
+        proba = ybar[yi]
+        label = tf.to_int32(tf.argmax(ybar, axis=0))
+        return tf.reduce_all([tf.less(epoch, nb_epoch),
+                              tf.greater(pixels_left, 0),
+                              tf.logical_or(
+                                  tf.not_equal(yi, label),
+                                  tf.less(proba, min_proba))])
 
-    def _body(x_adv, epoch):
-        y = model(x_adv)
+    def _body(x_adv, epoch, pixels_left):
+        ybar = model(x_adv)
 
-        mask = tf.one_hot(target, tf.size(y), on_value=True,
-                          off_value=False)
-        mask = tf.expand_dims(mask, axis=0)
-        yt = tf.boolean_mask(y, mask)
-        yo = tf.boolean_mask(y, tf.logical_not(mask))
-        dt_dx, = tf.gradients(yt, x_adv)
-        do_dx, = tf.gradients(yo, x_adv)
+        y_target = tf.slice(ybar, [0, yi], [-1, 1])
+        dy_dx, = tf.gradients(ybar, x_adv)
 
-        cond = tf.cond(delta > tf.constant(0.),
-                       lambda: x_adv < clip_max,
-                       lambda: x_adv > clip_min)
+        dt_dx, = tf.gradients(y_target, x_adv)
+        do_dx = dy_dx - dt_dx
+
+        cond = tf.cond(eps > tf.constant(0.),
+                       lambda: x_adv <= clip_max,
+                       lambda: x_adv >= clip_min)
+        pixels_left = tf.size(cond)
+
         ind = tf.where(cond)
         n = tf.shape(ind)
         n = n[0]
@@ -125,11 +177,10 @@ def jsma2(model, x, target, nb_epoch=None, delta=1., clip_min=0.,
             i, j = tf.gather(ii, p), tf.gather(jj, p)
             i, j = tf.to_int32(i), tf.to_int32(j)
 
-            i0, j0, v0 = tf.cond(tf.greater(v, v0),
+            i1, j1, v1 = tf.cond(tf.greater(v, v0),
                                  lambda: (i, j, v),
                                  lambda: (i0, j0, v0))
-            start += batch_size
-            return i0, j0, v0, start
+            return i1, j1, v1, start+batch_size
 
         i = tf.to_int32(tf.gather(ind, 0))
         j = tf.to_int32(tf.gather(ind, 0))
@@ -143,19 +194,18 @@ def jsma2(model, x, target, nb_epoch=None, delta=1., clip_min=0.,
         # max, during each batch we use vectorized implementation.
         i, j, _, _ = tf.while_loop(_maxpair_batch_cond,
                                    _maxpair_batch_body,
-                                   (i, j, v, start))
+                                   (i, j, v, start), back_prop=False)
 
-        dx = tf.scatter_nd([i], [delta], tf.shape(x_adv)) +\
-             tf.scatter_nd([j], [delta], tf.shape(x_adv))
+        dx = tf.scatter_nd([i], [eps], tf.shape(x_adv)) +\
+             tf.scatter_nd([j], [eps], tf.shape(x_adv))
 
         x_adv = tf.stop_gradient(x_adv + dx)
-
-        if (clip_min is not None) and (clip_max is not None):
-            x_adv = tf.clip_by_value(x_adv, clip_min, clip_max)
-
         epoch += 1
-        return x_adv, epoch
+
+        return x_adv, epoch, pixels_left
 
     epoch = tf.Variable(0, tf.int32)
-    x_adv, epoch = tf.while_loop(_cond, _body, (x, epoch))
+    x_adv, _, _ = tf.while_loop(_cond, _body, (xi, epoch, nb_pixels),
+                                back_prop=False, name='jsma2_step')
+    x_adv = tf.clip_by_value(x_adv, clip_min, clip_max)
     return x_adv
