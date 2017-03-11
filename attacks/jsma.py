@@ -1,8 +1,8 @@
 import tensorflow as tf
 
 
-def jsma(model, x, y, nb_epoch=None, max_distort=1., eps=1.,
-         clip_min=0.0, clip_max=1.0, pair=False, min_proba=0.):
+def jsma(model, x, y, nb_epoch=None, tol=1., eps=1., clip_min=0.0,
+         clip_max=1.0, pair=False, min_proba=0.):
     xshape = tf.shape(x)
     n = xshape[0]
     target = tf.cond(tf.equal(0, tf.rank(y)),
@@ -22,9 +22,8 @@ def jsma(model, x, y, nb_epoch=None, max_distort=1., eps=1.,
         yi = tf.gather(target, i)
 
         # `xadv` is of the shape (1, ...), same as xi.
-        xadv = _jsma_fn(model, xi, yi, nb_epoch=nb_epoch,
-                        max_distort=max_distort, eps=eps,
-                        clip_min=clip_min, clip_max=clip_max,
+        xadv = _jsma_fn(model, xi, yi, nb_epoch=nb_epoch, tol=tol,
+                        eps=eps, clip_min=clip_min, clip_max=clip_max,
                         min_proba=min_proba)
         return xadv[0]
 
@@ -32,11 +31,11 @@ def jsma(model, x, y, nb_epoch=None, max_distort=1., eps=1.,
                      back_prop=False, name='jsma_batch')
 
 
-def _jsma_impl(model, xi, yi, nb_epoch=None, max_distort=1., eps=1.,
+def _jsma_impl(model, xi, yi, nb_epoch=None, tol=1., eps=1.,
                clip_min=0., clip_max=1., min_proba=0.):
 
     if nb_epoch is None:
-        n = tf.to_float(tf.size(xi)) * max_distort
+        n = tf.to_float(tf.size(xi)) * tol
         nb_epoch = tf.to_int32(tf.floor(n))
 
     def _cond(x_adv, epoch, pixel_mask):
@@ -80,6 +79,8 @@ def _jsma_impl(model, xi, yi, nb_epoch=None, max_distort=1., eps=1.,
         dx = tf.scatter_nd(p, [eps], tf.shape(x_adv), name='dx')
 
         x_adv = tf.stop_gradient(x_adv + dx)
+        x_adv = tf.clip_by_value(x_adv, clip_min, clip_max)
+
         epoch += 1
         pixel_mask = tf.cond(tf.greater(eps, 0.),
                              lambda: tf.less(x_adv, clip_max),
@@ -96,7 +97,6 @@ def _jsma_impl(model, xi, yi, nb_epoch=None, max_distort=1., eps=1.,
     x_adv, _, _ = tf.while_loop(_cond, _body,
                                 (x_adv, epoch, pixel_mask),
                                 back_prop=False, name='jsma_step')
-    x_adv = tf.clip_by_value(x_adv, clip_min, clip_max)
 
     return x_adv
 
@@ -200,6 +200,7 @@ def _jsma2_impl(model, xi, yi, nb_epoch=None, eps=1.0, clip_min=0.0,
              tf.scatter_nd([j], [eps], tf.shape(x_adv))
 
         x_adv = tf.stop_gradient(x_adv + dx)
+        x_adv = tf.clip_by_value(x_adv, clip_min, clip_max)
         epoch += 1
 
         return x_adv, epoch, pixels_left
@@ -207,5 +208,4 @@ def _jsma2_impl(model, xi, yi, nb_epoch=None, eps=1.0, clip_min=0.0,
     epoch = tf.Variable(0, tf.int32)
     x_adv, _, _ = tf.while_loop(_cond, _body, (xi, epoch, nb_pixels),
                                 back_prop=False, name='jsma2_step')
-    x_adv = tf.clip_by_value(x_adv, clip_min, clip_max)
     return x_adv
