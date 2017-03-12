@@ -15,14 +15,23 @@ return a Tensorflow operation which could be run through
   [basic](https://arxiv.org/abs/1412.6572)/[iterative](https://arxiv.org/abs/1607.02533)
 
     ```python
-fgsm(model, x, eps=0.01, nb_epoch=1, clip_min=0., clip_max=1.)
+fgsm(model, x, eps=0.01, nb_epoch=1, clip_min=0.0, clip_max=1.0)
     ```
+
+- [Target class Gradient Sign Method (TGSM)](https://arxiv.org/abs/1607.02533)
+
+    ```python
+tgsm(model, x, y=None, eps=0.01, nb_epoch=1, clip_min=0.0, clip_max=1.0)
+    ```
+
+    When `y=None`, this implements the least-likely class method.  If
+    `y` is an integer or a list of integers, the source image is
+    modified towards label `y`.
 
 - [Jacobian-based Saliency Map Approach (JSMA)](https://arxiv.org/abs/1511.07528)
 
     ```python
-jsma(model, x, y, nb_epoch=None, tol=1.0, eps=1., clip_min=0.0,
-clip_max=1.0, pair=False, min_proba=0.0)
+jsma(model, x, y, nb_epoch=None, tol=1.0, eps=1., clip_min=0.0, clip_max=1.0, pair=False, min_proba=0.0)
     ```
 
     `y` is the target label, could be an integer or a list.  `tol`

@@ -22,11 +22,10 @@ def fgsm(model, x, eps=0.01, nb_epoch=1, clip_min=0., clip_max=1.):
             labels=target, logits=logits)
         dy_dx, = tf.gradients(loss, x_adv)
         x_adv = tf.stop_gradient(x_adv + eps*tf.sign(dy_dx))
+        x_adv = tf.clip_by_value(x_adv, clip_min, clip_max)
         return x_adv, i+1
 
     i = tf.Variable(0)
     x_adv, i = tf.while_loop(_cond, _body, (x_adv, i),
                              back_prop=False, name='fgsm')
-    x_adv = tf.clip_by_value(x_adv, clip_min, clip_max)
-
     return x_adv

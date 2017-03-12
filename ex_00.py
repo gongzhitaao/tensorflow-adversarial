@@ -126,7 +126,7 @@ else:
         y_adv[i] = y2[cur]
 
     os.makedirs('data', exist_ok=True)
-    with open('data/ex_00.npy', 'w') as w:
+    with open('data/ex_00.npy', 'wb') as w:
         np.savez(w, X_tmp=X_tmp, y_adv=y_adv)
 
 
