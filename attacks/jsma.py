@@ -1,13 +1,17 @@
 import tensorflow as tf
 
 
-def jsma(model, x, y, nb_epoch=None, tol=1.0, eps=1.0, clip_min=0.0,
+def jsma(model, x, y, nb_epoch=1.0, eps=1.0, clip_min=0.0,
          clip_max=1.0, pair=False, min_proba=0.0):
     xshape = tf.shape(x)
     n = xshape[0]
     target = tf.cond(tf.equal(0, tf.rank(y)),
                      lambda: tf.zeros([n], dtype=tf.int32)+y,
                      lambda: y)
+
+    if isinstance(nb_epoch, float):
+        tmp = tf.to_float(tf.size(x[0])) * nb_epoch
+        nb_epoch = tf.to_int32(tf.floor(tmp))
 
     if pair:
         _jsma_fn = _jsma2_impl
@@ -22,8 +26,8 @@ def jsma(model, x, y, nb_epoch=None, tol=1.0, eps=1.0, clip_min=0.0,
         yi = tf.gather(target, i)
 
         # `xadv` is of the shape (1, ...), same as xi.
-        xadv = _jsma_fn(model, xi, yi, nb_epoch=nb_epoch, tol=tol,
-                        eps=eps, clip_min=clip_min, clip_max=clip_max,
+        xadv = _jsma_fn(model, xi, yi, nb_epoch=nb_epoch, eps=eps,
+                        clip_min=clip_min, clip_max=clip_max,
                         min_proba=min_proba)
         return xadv[0]
 
@@ -31,12 +35,8 @@ def jsma(model, x, y, nb_epoch=None, tol=1.0, eps=1.0, clip_min=0.0,
                      back_prop=False, name='jsma_batch')
 
 
-def _jsma_impl(model, xi, yi, nb_epoch=None, tol=1., eps=1.,
-               clip_min=0., clip_max=1., min_proba=0.):
-
-    if nb_epoch is None:
-        n = tf.to_float(tf.size(xi)) * tol
-        nb_epoch = tf.to_int32(tf.floor(n))
+def _jsma_impl(model, xi, yi, nb_epoch, eps=1.0, clip_min=0.0,
+               clip_max=1.0, min_proba=0.0):
 
     def _cond(x_adv, epoch, pixel_mask):
         ybar = tf.reshape(model(x_adv), [-1])
@@ -99,12 +99,8 @@ def _jsma_impl(model, xi, yi, nb_epoch=None, tol=1., eps=1.,
     return x_adv
 
 
-def _jsma2_impl(model, xi, yi, nb_epoch=None, tol=1.0, eps=1.0,
-                clip_min=0.0, clip_max=1.0, min_proba=0.0):
-
-    if nb_epoch is None:
-        n = tf.to_float(tf.size(xi)) * tol * 0.5
-        nb_epoch = tf.to_int32(tf.floor(n))
+def _jsma2_impl(model, xi, yi, nb_epoch, eps=1.0, clip_min=0.0,
+                clip_max=1.0, min_proba=0.0):
 
     def _cond(x_adv, epoch, pixel_mask):
         ybar = tf.reshape(model(x_adv), [-1])
