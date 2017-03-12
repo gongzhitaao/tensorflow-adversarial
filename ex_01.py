@@ -1,7 +1,6 @@
 import os
-import time
-import gzip
-import pickle
+# supress tensorflow logging other than errors
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import numpy as np
 import tensorflow as tf
@@ -21,76 +20,79 @@ import matplotlib.gridspec as gridspec
 from attacks.jsma import jsma
 
 
-print('Loading mnist')
+img_rows = 28
+img_cols = 28
+img_chas = 1
+input_shape = (img_rows, img_cols, img_chas)
+nb_classes = 10
+
+
+print('\nLoading mnist')
 (X_train, y_train), (X_test, y_test) = mnist.load_data()
 
 X_train = X_train.astype('float32') / 255.
 X_test = X_test.astype('float32') / 255.
 
-# assume K.image_dim_ordering() == 'tf'
-X_train = X_train.reshape(-1, 28, 28, 1)
-X_test = X_test.reshape(-1, 28, 28, 1)
-input_shape = (28, 28, 1)
+X_train = X_train.reshape(-1, img_rows, img_cols, img_chas)
+X_test = X_test.reshape(-1, img_rows, img_cols, img_chas)
 
 # one hot encoding
 z_train = y_train.copy()
-y_train = np_utils.to_categorical(y_train, 10)
+y_train = np_utils.to_categorical(y_train, nb_classes)
 z_test = y_test.copy()
-y_test = np_utils.to_categorical(y_test, 10)
+y_test = np_utils.to_categorical(y_test, nb_classes)
 
-batch_size = 64
-nb_epoch = 10
-saved = True
 
 sess = tf.InteractiveSession()
 K.set_session(sess)
 
-print('Building model')
-if not saved:
-    model = Sequential()
-    model.add(Convolution2D(32, 3, 3,
-                            border_mode='valid',
-                            input_shape=(28, 28, 1)))
-    model.add(Activation('relu'))
-    model.add(Convolution2D(32, 3, 3))
-    model.add(Activation('relu'))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Dropout(0.25))
-    model.add(Flatten())
-    model.add(Dense(128))
-    model.add(Activation('relu'))
-    model.add(Dropout(0.5))
-    model.add(Dense(10))
-    model.add(Activation('softmax'))
+
+if True:
+    print('\nLoading model')
+    model = load_model('model/ex_01.h5')
+else:
+    print('\nBuilding model')
+    model = Sequential([
+        Convolution2D(32, 3, 3, input_shape=input_shape),
+        Activation('relu'),
+        Convolution2D(32, 3, 3),
+        Activation('relu'),
+        MaxPooling2D(pool_size=(2, 2)),
+        # Dropout(0.25),
+        Flatten(),
+        Dense(128),
+        Activation('relu'),
+        # Dropout(0.5),
+        Dense(10),
+        Activation('softmax')])
+
     model.compile(optimizer='adam', loss='categorical_crossentropy',
                   metrics=['accuracy'])
 
-    model.fit(X_train, y_train, nb_epoch=nb_epoch)
+    print('\nTraining model')
+    model.fit(X_train, y_train, nb_epoch=10)
 
+    print('\nSaving model')
     os.makedirs('model', exist_ok=True)
     model.save('model/ex_01.h5')
-else:
-    model = load_model('model/ex_01.h5')
 
 
-x = tf.placeholder(tf.float32, (None, 28, 28, 1))
-y = tf.placeholder(tf.float32, (None, 10))
+x = tf.placeholder(tf.float32, shape=(None, img_rows, img_cols,
+                                      img_chas))
+y = tf.placeholder(tf.float32, shape=(None, nb_classes))
 ybar = model(x)
 target = tf.placeholder(tf.int32, ())
-x_adv = jsma(model, x, target)
+x_adv = jsma(model, x, target, tol=0.1)
 
 
-print('Testing...')
+print('\nTest against clean data')
 score = model.evaluate(X_test, y_test)
 print('\nloss: {0:.4f} acc: {1:.4f}'.format(score[0], score[1]))
 
 
-saved = True
-
-if saved:
-    with gzip.open('data/ex_01.pkl.gz', 'rb') as r:
-        X_adv = pickle.load(r)
-        X_adv = np.array(X_adv)
+if False:
+    db = np.load('data/ex_01.npy')
+    X_adv = db['X_adv']
 else:
     thres = 0.9
     y_pred = model.predict(X_test)
@@ -105,12 +107,12 @@ else:
         print('Source label {0}'.format(i))
         ind = z0 == i
         X_i_all = x0[ind]
-        while True:
+        for cur in range(X_i_all.shape[0]):
             found = True
-            cur = np.random.choice(X_i_all.shape[0])
             X_i = X_i_all[cur, np.newaxis]
             for j in np.arange(10):
-                print(' Target label {0}'.format(j), end='')
+                print(' [{0}/{1}] {2} --> {3}'
+                      .format(cur, X_i_all.shape[0], i, j), end='')
                 if j == i:
                     X_i_adv = X_i.copy()
                 else:
@@ -130,11 +132,11 @@ else:
                 break
 
     os.makedirs('data', exist_ok=True)
-    with gzip.open('data/ex_01.pkl.gz', 'wb') as w:
-        pickle.dump(X_adv.tolist(), w)
+    with open('data/ex_01.npy', 'wb') as w:
+        np.savez(w, X_adv=X_adv)
 
 
-# Generaing figures
+print('\nGenerating figure')
 fig = plt.figure(figsize=(10, 10))
 gs = gridspec.GridSpec(10, 10, wspace=0.1, hspace=0.1)
 

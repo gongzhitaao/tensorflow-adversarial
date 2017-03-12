@@ -15,23 +15,20 @@ return a Tensorflow operation which could be run through
   [basic](https://arxiv.org/abs/1412.6572)/[iterative](https://arxiv.org/abs/1607.02533)
 
     ```python
-fgsm(model, x, y, eps=0.01, nb_epoch=1, clip_min=0., clip_max=1.)
+fgsm(model, x, eps=0.01, nb_epoch=1, clip_min=0., clip_max=1.)
     ```
-
-  `y` takes a couple of values:
-  - `'max'` denotes using the model predicted result,
-  - `'min'` denotes least-likely method,
-  - an integer means the target category,
-  - a list of integers means target category for each sample.
 
 - [Jacobian-based Saliency Map Approach (JSMA)](https://arxiv.org/abs/1511.07528)
 
     ```python
-jsma(model, x, target, nb_epoch=None, delta=1., clip_min=0., clip_max=1.)
-jsma2(model, x, target, nb_epoch=None, delta=1., clip_min=0., clip_max=1.)
+jsma(model, x, y, nb_epoch=None, tol=1.0, eps=1., clip_min=0.0,
+clip_max=1.0, pair=False, min_proba=0.0)
     ```
 
-    `jsma2` choose a pair of pixels to change at one time.
+    `y` is the target label, could be an integer or a list.  `tol`
+    ranges [0,1], denoting the maximum distortion to the image.
+    `min_proba` denotes the minimum confidence of target image.  If
+    `pair=True`, then modifies two pixels at a time.
 
 - Saliency map difference approach (SMDA)
 
