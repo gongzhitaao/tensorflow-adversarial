@@ -78,7 +78,7 @@ smda(model, x, y, nb_epoch=1.0, eps=1., clip_min=0.0, clip_max=1.0, min_proba=0.
     <img src="./img/ex_02.png" width="45%">
 
 - [**ex_02.py**](./ex_02.py) creates cross label adversarial images
-  via paired saliency map algorithm (JSMA2), right image.
+  via target class gradient sign method (TGSM), right image.
 
 - [**ex_03.py**](./ex_03.py) creates digits from blank images via
   saliency different algorithm (SMDA).

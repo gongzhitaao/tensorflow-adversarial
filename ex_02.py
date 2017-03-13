@@ -17,7 +17,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
-from attacks.jsma import jsma
+from attacks.tgsm import tgsm
 
 
 img_rows = 28
@@ -82,7 +82,7 @@ x = tf.placeholder(tf.float32, shape=(None, img_rows, img_cols,
 y = tf.placeholder(tf.float32, shape=(None, nb_classes))
 ybar = model(x)
 target = tf.placeholder(tf.int32, ())
-x_adv = jsma(model, x, target, nb_epoch=0.1, pair=True)
+x_adv = tgsm(model, x, target, eps=0.01, nb_epoch=30)
 
 
 print('\nTest against clean data')
