@@ -86,7 +86,7 @@ x = tf.placeholder(tf.float32, shape=(None, img_rows, img_cols,
                                       img_chas))
 y = tf.placeholder(tf.float32, shape=(None, nb_classes))
 target = tf.placeholder(tf.int32, ())
-x_adv = jsma(model, x, target, nb_epoch=0.1, pair=True, min_proba=0.8)
+x_adv = jsma(model, x, target, nb_epoch=0.05, pair=True, min_proba=0.8)
 
 
 print('\nTest against clean data')

@@ -160,12 +160,11 @@ def _jsma2_impl(model, xi, yi, nb_epoch, eps=1.0, clip_min=0.0,
 
             # increase target probability while decrease others
             c = tf.logical_and(t>=0, o<=0)
+            not_empty = tf.reduce_any(c)
 
             # ensure that c is not empty
-            c = tf.cond(tf.reduce_any(c), lambda: c, lambda: t>=0)
-
-            # ensure that c is not empty
-            c = tf.cond(tf.reduce_any(c), lambda: c,
+            c = tf.cond(not_empty,
+                        lambda: c,
                         lambda: tf.ones_like(c, dtype=bool))
             c = tf.where(c)
 
@@ -173,7 +172,9 @@ def _jsma2_impl(model, xi, yi, nb_epoch, eps=1.0, clip_min=0.0,
             ii, jj = tf.gather_nd(ii, c), tf.gather_nd(jj, c)
 
             # saliency score
-            score = tf.multiply(t, tf.abs(o))
+            score = tf.cond(not_empty,
+                            lambda: tf.multiply(t, tf.abs(o)),
+                            lambda: t-o)
 
             # find the max pair in current batch
             p = tf.argmax(score, axis=0)
