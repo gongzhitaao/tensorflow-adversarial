@@ -65,7 +65,7 @@ def _jsma_impl(model, xi, yi, nb_epoch, eps=1.0, clip_min=0.0,
         # ensure that pixel_domain is not empty
         domain = tf.cond(not_empty,
                          lambda: domain,
-                         lambda: tf.ones_like(domain, dtype=bool))
+                         lambda: pixel_mask)
         score = tf.cond(not_empty,
                         lambda: score,
                         lambda: dt_dx-do_dx)
