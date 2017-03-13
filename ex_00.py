@@ -46,7 +46,7 @@ sess = tf.InteractiveSession()
 K.set_session(sess)
 
 
-if False:
+if True:
     print('\nLoading model')
     model = load_model('model/ex_00.h5')
 else:

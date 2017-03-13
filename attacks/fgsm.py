@@ -10,7 +10,8 @@ def fgsm(model, x, eps=0.01, nb_epoch=1, clip_min=0., clip_max=1.):
 
     indices = tf.argmax(ybar, axis=1)
     eps = tf.abs(eps)
-    target = tf.one_hot(indices, ydim)
+    target = tf.one_hot(indices, ydim, on_value=clip_max,
+                        off_value=clip_min)
 
     def _cond(x_adv, i):
         return tf.less(i, nb_epoch)
