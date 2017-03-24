@@ -64,8 +64,8 @@ def _jsma_impl(model, xi, yi, nb_epoch, eps=1.0, clip_min=0.0,
 
         # ensure that domain is not empty
         domain, score = tf.cond(not_empty,
-                                lambda: domain, score,
-                                lambda: pixel_mask, dt_dx-do_dx)
+                                lambda: (domain, score),
+                                lambda: (pixel_mask, dt_dx-do_dx))
 
         ind = tf.where(domain)
         score = tf.gather_nd(score, ind)
