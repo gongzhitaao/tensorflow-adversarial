@@ -1,7 +1,6 @@
 import os
-import time
-import gzip
-import pickle
+# supress tensorflow logging other than errors
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import numpy as np
 import tensorflow as tf
@@ -10,10 +9,9 @@ from keras import backend as K
 from keras.datasets import cifar10
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential, load_model
-from keras.layers.core import Dense, Dropout, Activation, Flatten
-from keras.layers.convolutional import Convolution2D, MaxPooling2D
-from keras.layers.advanced_activations import LeakyReLU, PReLU
-from keras.layers.advanced_activations import ParametricSoftplus
+from keras.layers import Dense, Dropout, Activation, Flatten
+from keras.layers import Conv2D, MaxPooling2D
+from keras.layers import LeakyReLU, PReLU
 from keras.callbacks import EarlyStopping
 from keras.utils import np_utils
 
@@ -27,14 +25,10 @@ from attacks.fgsm import fgsm
 
 batch_size = 64
 nb_classes = 10
-nb_epoch = 100
 
 img_channels = 3
 img_rows = 32
 img_cols = 32
-
-model_saved = True
-adv_saved = False
 
 
 (X_train, y_train), (X_test, y_test) = cifar10.load_data()
@@ -43,9 +37,8 @@ print(X_train.shape[0], 'train samples')
 print(X_test.shape[0], 'test samples')
 
 
-if not model_saved:
+if False:
     # if we need to train the model, we augment the training data
-
     datagen = ImageDataGenerator(
         featurewise_center=False,
         samplewise_center=False,
@@ -81,67 +74,68 @@ print('y_test shape:', y_test.shape)
 X_train = X_train.astype('float32') / 255.
 X_test = X_test.astype('float32') / 255.
 
-print('Building model')
+
 sess = tf.InteractiveSession()
 K.set_session(sess)
 
 
-if model_saved:
+if False:
     print('loading model')
     model = load_model('model/ex_06.h5')
 else:
     print('building model')
-    model = Sequential()
-    model.add(Convolution2D(32, 3, 3, border_mode='same',
-                            input_shape=X_train.shape[1:]))
-    model.add(LeakyReLU(alpha=0.2))
-    model.add(Convolution2D(32, 3, 3))
-    model.add(LeakyReLU(alpha=0.2))
-    model.add(MaxPooling2D(pool_size=(2,2)))
-    model.add(Dropout(0.2))
-
-    model.add(Convolution2D(64, 3, 3, border_mode='same'))
-    model.add(LeakyReLU(alpha=0.2))
-    model.add(Convolution2D(64, 3, 3))
-    model.add(LeakyReLU(alpha=0.2))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Dropout(0.3))
-
-    model.add(Convolution2D(128, 3, 3, border_mode='same'))
-    model.add(LeakyReLU(alpha=0.2))
-    model.add(Convolution2D(128, 3, 3))
-    model.add(LeakyReLU(alpha=0.2))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Dropout(0.4))
-
-    model.add(Flatten())
-    model.add(Dense(512))
-    model.add(Activation('relu'))
-    model.add(Dropout(0.5))
-
-    model.add(Dense(nb_classes))
-    model.add(Activation('softmax'))
+    model = Sequential([
+        Conv2D(filters=32, kernel_size=(3, 3), padding='same',
+               input_shape=X_train.shape[1:]),
+        LeakyReLU(alpha=0.2),
+        Conv2D(filters=32, kernel_size=(3, 3)),
+        LeakyReLU(alpha=0.2),
+        MaxPooling2D(pool_size=(2,2)),
+        Dropout(0.2),
+        Conv2D(filters=64, kernel_size=(3, 3), padding='same'),
+        LeakyReLU(alpha=0.2),
+        Conv2D(filters=64, kernel_size=(3, 3), padding='same'),
+        LeakyReLU(alpha=0.2),
+        MaxPooling2D(pool_size=(2, 2)),
+        Dropout(0.3),
+        Conv2D(filters=128, kernel_size=(3, 3), padding='same'),
+        LeakyReLU(alpha=0.2),
+        Conv2D(filters=128, kernel_size=(3, 3), padding='same'),
+        LeakyReLU(alpha=0.2),
+        MaxPooling2D(pool_size=(2, 2)),
+        Dropout(0.4),
+        Flatten(),
+        Dense(512),
+        Activation('relu'),
+        Dropout(0.5),
+        Dense(nb_classes),
+        Activation('softmax')])
 
     model.compile(loss='categorical_crossentropy',
                   optimizer='adam', metrics=['accuracy'])
 
     earlystopping = EarlyStopping(monitor='val_loss', patience=10,
                                   verbose=1)
-    model.fit(X_train, y_train,
-              batch_size=batch_size,
-              nb_epoch=nb_epoch,
-              validation_split=0.1,
+    model.fit(X_train, y_train, epochs=100, validation_split=0.1,
               callbacks=[earlystopping])
 
     os.makedirs('model', exist_ok=True)
     model.save('model/ex_06.h5')
 
 
-x = tf.placeholder(tf.float32, shape=(None, img_rows, img_cols,
-                                      img_channels))
-y = tf.placeholder(tf.float32, shape=(None, nb_classes))
+x = tf.placeholder(tf.float32, (None, img_rows, img_cols,
+                                img_channels))
+y = tf.placeholder(tf.float32, (None, nb_classes))
 eps = tf.placeholder(tf.float32, ())
-x_adv = fgsm(model, x, y='max', nb_epoch=4, eps=0.01)
+
+def _model_fn(x, logits=False):
+    ybar = model(x)
+    logits_, = ybar.op.inputs
+    if logits:
+        return ybar, logits_
+    return ybar
+
+x_adv = fgsm(_model_fn, x, epochs=4, eps=0.01)
 
 
 print('Testing...')
@@ -149,11 +143,9 @@ score = model.evaluate(X_test, y_test)
 print('\nloss: {0:.4f} acc: {1:.4f}'.format(score[0], score[1]))
 
 
-if adv_saved:
-    with gzip.open('data/ex_06.pkl.gz', 'rb') as r:
-        X_adv, y_adv, y_pred, _ = pickle.load(r)
-        X_adv, y_adv = np.array(X_adv), np.array(y_adv)
-        y_pred = np.array(y_pred)
+if False:
+    db = np.load('data/ex_06.npz')
+    X_adv, y_adv, y_pred, _ = db['X_adv'], db['y_adv'], db['y_pred']
 else:
     print('generating adversarial data')
     nb_sample = X_test.shape[0]
@@ -171,9 +163,7 @@ else:
     print('saving adversarial data')
     y_adv = model.predict(X_adv)
     y_pred = model.predict(X_test)
-    with gzip.open('data/ex_06.pkl.gz',  'wb') as w:
-        pickle.dump([X_adv.tolist(), y_adv.tolist(),
-                     y_pred.tolist(), y_test.tolist()], w)
+    np.savez('data/ex_06.npz', X_adv=X_adv, y_adv=y_adv, y_pred=y_pred)
 
 
 print('Testing against adversarial test data')
@@ -195,8 +185,7 @@ for i in range(10):
     print('Target {0}'.format(i))
     ind, = np.where(np.all([z0==i, z1==i, z2!=i, p1>0.8, p2>0.8],
                            axis=0))
-    cur = np.random.choice(ind.shape[0])
-    cur = ind[cur]
+    cur = np.random.choice(ind)
     X_tmp[i] = np.squeeze(X_adv[cur])
     y_tmp[i] = p2[cur]
     z_tmp[i] = z2[cur]
