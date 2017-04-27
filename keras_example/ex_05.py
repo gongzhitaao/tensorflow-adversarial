@@ -9,7 +9,7 @@ from keras import backend as K
 from keras.datasets import mnist
 from keras.models import Sequential, load_model
 from keras.layers import Dense, Dropout, Activation, Flatten
-from keras.layers import Convolution2D, MaxPooling2D
+from keras.layers import Conv2D, MaxPooling2D
 from keras.utils import np_utils
 
 import matplotlib
@@ -46,15 +46,16 @@ sess = tf.InteractiveSession()
 K.set_session(sess)
 
 
-if True:
+if False:
     print('\nLoading model')
     model = load_model('model/ex_05.h5')
 else:
     print('\nBuilding model')
     model = Sequential([
-        Convolution2D(32, 3, 3, input_shape=input_shape),
+        Conv2D(filters=32, kernel_size=(3, 3), padding='same',
+               input_shape=input_shape),
         Activation('relu'),
-        Convolution2D(32, 3, 3),
+        Conv2D(filters=32, kernel_size=(3, 3), padding='same'),
         Activation('relu'),
         MaxPooling2D(pool_size=(2, 2)),
         # Dropout(0.25),
@@ -69,7 +70,7 @@ else:
                   metrics=['accuracy'])
 
     print('\nTraining model')
-    model.fit(X_train, y_train, nb_epoch=10)
+    model.fit(X_train, y_train, epochs=5)
 
     print('\nSaving model')
     os.makedirs('model', exist_ok=True)
@@ -79,7 +80,15 @@ else:
 x = tf.placeholder(tf.float32, shape=(None, img_rows, img_cols,
                                       img_chas))
 y = tf.placeholder(tf.float32, shape=(None, nb_classes))
-x_adv = tgsm(model, x, nb_epoch=12, eps=0.02)
+
+
+def _model_fn(x, logits=False):
+    ybar = model(x)
+    logits_, = ybar.op.inputs
+    if logits:
+        return ybar, logits_
+    return ybar
+x_adv = tgsm(_model_fn, x, epochs=12, eps=0.02)
 
 
 print('\nTest against clean data')
