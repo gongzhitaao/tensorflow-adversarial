@@ -9,7 +9,7 @@ from keras import backend as K
 from keras.datasets import mnist
 from keras.models import Sequential, load_model
 from keras.layers import Dense, Dropout, Activation
-from keras.layers import Convolution2D, MaxPooling2D, Flatten
+from keras.layers import Conv2D, MaxPooling2D, Flatten
 from keras.utils import np_utils
 
 import matplotlib
@@ -47,15 +47,16 @@ sess = tf.InteractiveSession()
 K.set_session(sess)
 
 
-if True:
+if False:
     print('\nLoading model')
     model = load_model('model/ex_01.h5')
 else:
     print('\nBuilding model')
     model = Sequential([
-        Convolution2D(32, 3, 3, input_shape=input_shape),
+        Conv2D(filters=32, kernel_size=(3, 3), padding='same',
+               input_shape=input_shape),
         Activation('relu'),
-        Convolution2D(32, 3, 3),
+        Conv2D(filters=32, kernel_size=(3, 3), padding='same'),
         Activation('relu'),
         MaxPooling2D(pool_size=(2, 2)),
         # Dropout(0.25),
@@ -70,7 +71,7 @@ else:
                   metrics=['accuracy'])
 
     print('\nTraining model')
-    model.fit(X_train, y_train, nb_epoch=10)
+    model.fit(X_train, y_train, epochs=5)
 
     print('\nSaving model')
     os.makedirs('model', exist_ok=True)
@@ -82,7 +83,7 @@ x = tf.placeholder(tf.float32, shape=(None, img_rows, img_cols,
 y = tf.placeholder(tf.float32, shape=(None, nb_classes))
 ybar = model(x)
 target = tf.placeholder(tf.int32, ())
-x_adv = jsma(model, x, target, nb_epoch=0.1)
+x_adv = jsma(model, x, target, epochs=0.1)
 
 
 print('\nTest against clean data')
