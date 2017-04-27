@@ -14,7 +14,7 @@ from keras import backend as K
 from keras.datasets import mnist
 from keras.models import Sequential, load_model
 from keras.layers import Dense, Dropout, Activation
-from keras.layers import Convolution2D, MaxPooling2D, Flatten
+from keras.layers import Conv2D, MaxPooling2D, Flatten
 from keras.utils import np_utils
 
 import matplotlib
@@ -58,9 +58,10 @@ if False:
 else:
     print('\nBuilding model')
     model = Sequential([
-        Convolution2D(32, 3, 3, input_shape=input_shape),
+        Conv2D(filters=32, kernel_size=(3, 3), padding='same',
+               input_shape=input_shape),
         Activation('relu'),
-        Convolution2D(32, 3, 3),
+        Conv2D(filters=32, kernel_size=(3, 3), padding='same'),
         Activation('relu'),
         MaxPooling2D(pool_size=(2, 2)),
         # Dropout(0.25),
@@ -75,7 +76,7 @@ else:
                   metrics=['accuracy'])
 
     print('\nTraining model')
-    model.fit(X_train, y_train, nb_epoch=10)
+    model.fit(X_train, y_train, epochs=5)
 
     print('\nSaving model')
     os.makedirs('model', exist_ok=True)
