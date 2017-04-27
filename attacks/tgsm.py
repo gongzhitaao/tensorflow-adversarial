@@ -25,8 +25,7 @@ def tgsm(model, x, y=None, eps=0.01, epochs=1, clip_min=0., clip_max=1.):
         return tf.less(i, epochs)
 
     def _body(x_adv, i):
-        ybar = model(x_adv)
-        logits, = ybar.op.inputs
+        ybar, logits = model(x_adv, logits=True)
         loss = tf.nn.softmax_cross_entropy_with_logits(
             labels=target, logits=logits)
         dy_dx, = tf.gradients(loss, x_adv)
