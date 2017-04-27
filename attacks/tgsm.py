@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 
-def tgsm(model, x, y=None, eps=0.01, nb_epoch=1, clip_min=0., clip_max=1.):
+def tgsm(model, x, y=None, eps=0.01, epochs=1, clip_min=0., clip_max=1.):
 
     x_adv = tf.identity(x)
     eps = -tf.abs(eps)
@@ -22,7 +22,7 @@ def tgsm(model, x, y=None, eps=0.01, nb_epoch=1, clip_min=0., clip_max=1.):
                         off_value=clip_min)
 
     def _cond(x_adv, i):
-        return tf.less(i, nb_epoch)
+        return tf.less(i, epochs)
 
     def _body(x_adv, i):
         ybar = model(x_adv)
@@ -34,7 +34,6 @@ def tgsm(model, x, y=None, eps=0.01, nb_epoch=1, clip_min=0., clip_max=1.):
         x_adv = tf.clip_by_value(x_adv, clip_min, clip_max)
         return x_adv, i+1
 
-    i = tf.Variable(0)
-    x_adv, i = tf.while_loop(_cond, _body, (x_adv, i),
+    x_adv, i = tf.while_loop(_cond, _body, (x_adv, 0),
                              back_prop=False, name='tgsm')
     return x_adv
