@@ -52,7 +52,7 @@ sess = tf.InteractiveSession()
 K.set_session(sess)
 
 
-if True:
+if False:
     print('\nLoading model')
     model = load_model('model/ex_03.h5')
 else:
@@ -75,7 +75,7 @@ else:
                   metrics=['accuracy'])
 
     print('\nTraining model')
-    model.fit(X_train, y_train, nb_epoch=10)
+    model.fit(X_train, y_train, nb_epoch=5)
 
     print('\nSaving model')
     os.makedirs('model', exist_ok=True)
@@ -86,7 +86,7 @@ x = tf.placeholder(tf.float32, shape=(None, img_rows, img_cols,
                                       img_chas))
 y = tf.placeholder(tf.float32, shape=(None, nb_classes))
 target = tf.placeholder(tf.int32, ())
-x_adv = smda(model, x, target, nb_epoch=0.1, min_proba=0.8)
+x_adv = smda(model, x, target, epochs=0.1, min_proba=0.8)
 
 
 print('\nTest against clean data')
