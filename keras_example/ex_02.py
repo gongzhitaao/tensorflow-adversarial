@@ -9,7 +9,7 @@ from keras import backend as K
 from keras.datasets import mnist
 from keras.models import Sequential, load_model
 from keras.layers import Dense, Dropout, Activation
-from keras.layers import Convolution2D, MaxPooling2D, Flatten
+from keras.layers import Conv2D, MaxPooling2D, Flatten
 from keras.utils import np_utils
 
 import matplotlib
@@ -47,17 +47,17 @@ sess = tf.InteractiveSession()
 K.set_session(sess)
 
 
-if True:
+if False:
     print('\nLoading model')
     model = load_model('model/ex_02.h5')
 else:
     print('\nBuilding model')
     model = Sequential([
-        Convolution2D(32, 3, 3, input_shape=input_shape),
+        Conv2D(32, (3, 3), padding='same', input_shape=input_shape),
         Activation('relu'),
-        Convolution2D(32, 3, 3),
+        Conv2D(32, (3, 3), padding='same'),
         Activation('relu'),
-        MaxPooling2D(pool_size=(2, 2)),
+        MaxPooling2D(pool_size=(2, 2), padding='same'),
         # Dropout(0.25),
         Flatten(),
         Dense(128),
@@ -70,19 +70,16 @@ else:
                   metrics=['accuracy'])
 
     print('\nTraining model')
-    model.fit(X_train, y_train, nb_epoch=10)
+    model.fit(X_train, y_train, epochs=10)
 
     print('\nSaving model')
     os.makedirs('model', exist_ok=True)
     model.save('model/ex_02.h5')
 
 
-x = tf.placeholder(tf.float32, shape=(None, img_rows, img_cols,
-                                      img_chas))
-y = tf.placeholder(tf.float32, shape=(None, nb_classes))
-ybar = model(x)
-target = tf.placeholder(tf.int32, ())
-x_adv = tgsm(model, x, target, eps=0.01, nb_epoch=30)
+x = tf.placeholder(tf.float32, (None, img_rows, img_cols, img_chas))
+y = tf.placeholder(tf.int32, ())
+x_adv = tgsm(model, x, y, eps=0.01, epochs=30)
 
 
 print('\nTest against clean data')
@@ -91,8 +88,7 @@ print('\nloss: {0:.4f} acc: {1:.4f}'.format(score[0], score[1]))
 
 
 if False:
-    db = np.load('data/ex_02.npy')
-    X_adv = db['X_adv']
+    X_adv = np.load('data/ex_02.npy')
 else:
     thres = 0.9
     y_pred = model.predict(X_test)
@@ -117,7 +113,7 @@ else:
                     X_i_adv = X_i.copy()
                 else:
                     X_i_adv = sess.run(x_adv, feed_dict={
-                        x: X_i, target: j, K.learning_phase(): 0})
+                        x: X_i, y: j, K.learning_phase(): 0})
                 y_i_adv = model.predict(X_i_adv)
                 y1 = np.max(y_i_adv)
                 z1 = np.argmax(y_i_adv)
@@ -132,8 +128,7 @@ else:
                 break
 
     os.makedirs('data', exist_ok=True)
-    with open('data/ex_02.npy', 'wb') as w:
-        np.savez(w, X_adv=X_adv)
+    np.save('data/ex_02.npy', X_adv)
 
 
 print('\nGenerating figure')
