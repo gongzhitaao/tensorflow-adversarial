@@ -1,0 +1,73 @@
+#+TITLE: Keras Example
+
+This directory contains code examples using attacking method with
+Keras platform (Tensorflow as backend, of course).  A couple of things
+to tweak before using Keras with Tensorflow tensors.  You could refer
+to the official [[https://blog.keras.io/keras-as-a-simplified-interface-to-tensorflow-tutorial.html][document on Keras+Tensorflow]].
+
+Essentially, we need to notify Keras that we want to manage the
+session ourselves.
+
+#+BEGIN_SRC python
+import tensorflow as tf
+from keras import backend as K
+
+sess = tf.Session()
+# sess = tf.InteractiveSession()
+K.set_session(sess)
+#+END_SRC
+
+The model is defined using the Keras syntax.
+
+#+BEGIN_SRC python
+model = Sequential([
+    Conv2D(filters=32, kernel_size=(3, 3), padding='same',
+           input_shape=input_shape),
+    MaxPooling2D(pool_size=(2, 2), padding='same'),
+    Flatten(),
+    Dense(10),
+    Activation('softmax')])
+
+model.compile(optimizer='adam', loss='categorical_crossentropy',
+              metrics=['accuracy'])
+#+END_SRC
+
+And the adversarial crafting graph is created via
+
+#+BEGIN_SRC python
+x = tf.placeholder(tf.float32, (None, img_rows, img_cols, img_chas))
+
+def _model_fn(x, logits=False):
+    ybar = model(x)
+    logits_, = ybar.op.inputs
+    if logits:
+        return ybar, logits_
+    return ybar
+
+x_adv = fgsm(_model_fn, x, epochs=9, eps=0.02)
+
+#+END_SRC
+
+And the =_model_fn= needs to have the signature that
+
+1. The first parameter /must be/ the network input variable, usually a
+   =tf.placeholder=.
+2. The second parameter /must be/ the =logits=, with default value
+   =False=.  if =True=, return the output tensor /and/ the logits.
+   Otherwise, return the output tensor only.  The rational is that we
+   use =tf.nn.softmax_cross_entropy_with_logits= in the attacking
+   method to calculate the loss.
+3. You may pass other parameters to your function /provided that they
+   all have default values/.
+
+* Bug
+
+Currently there is a bug [[https://github.com/fchollet/keras/issues/5469][keras/issues/5469]] when using =Dropout= layer
+in Keras with Tensorflow as backend.  If =Dropout= is used, then The
+number of epochs for =tf.while_loop= cannot exceed 10 (the default
+value of =parallel_iterations=, I do not know why...), otherwise the
+program will hang.  Refer to the bug report for more information.
+
+To workaround the bug, all =Dropout= layers are commented out.  I
+tried pure code with Tensorflow and it works fine, so it should be the
+Keras internal implementation problem.
