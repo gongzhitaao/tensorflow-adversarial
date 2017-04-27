@@ -1,0 +1,36 @@
+#+TITLE: Tensorflow Example
+
+This directory contains using attacking method with pure Tensorflow
+code.  It is /a bit tricky/ since we need to manage the reuse of
+inference graph ourselves.
+
+
+Essentially, the =model= function is defined as
+
+#+BEGIN_SRC python
+def model(x, logits=False, ...):
+    logits_ = tf.layers.dense(x, units=10, activation=tf.nn.relu)
+    y = tf.nn.softmax(logits_)
+    if logits:
+        return y, logits_
+    return y
+#+END_SRC
+
+1. The first parameter /must be/ the network input variable, usually a
+   =tf.placeholder=.
+2. The second parameter /must be/ the =logits=, with default value
+   =False=.  if =True=, return the output tensor /and/ the logits.
+   Otherwise, return the output tensor only.  The rational is that we
+   use =tf.nn.softmax_cross_entropy_with_logits= in the attacking
+   method to calculate the loss.
+3. You may pass other parameters to your function /provided that they
+   all have default values/.
+
+Although we call =model= multiple times, they should all refer to the
+same network.  In other words, we need to *reuse* the inference graph
+created by =model=.  Therefore, in the example code, we use the
+=tf.variable_scope('xxx', reuse=...)=.
+
+The =mnist.py= is an utility that loads MNIST dataset, other
+convenient and self-contained data loading scripts could be found in
+[[https://github.com/gongzhitaao/load_data][gongzhitaao/load_data]] repo.
