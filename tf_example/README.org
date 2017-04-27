@@ -1,9 +1,8 @@
 #+TITLE: Tensorflow Example
 
-This directory contains using attacking method with pure Tensorflow
-code.  It is /a bit tricky/ since we need to manage the reuse of
-inference graph ourselves.
-
+This directory contains code examples using attacking method with pure
+Tensorflow code.  It is /a bit tricky/ in that we need to manage the
+reuse of inference graph ourselves.
 
 Essentially, the =model= function is defined as
 
