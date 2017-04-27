@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 
-def smda(model, x, y, nb_epoch=1.0, eps=1.0, clip_min=0.0,
+def smda(model, x, y, epochs=1.0, eps=1.0, clip_min=0.0,
          clip_max=1.0, min_proba=0.0):
     xshape = tf.shape(x)
     n = xshape[0]
@@ -9,9 +9,9 @@ def smda(model, x, y, nb_epoch=1.0, eps=1.0, clip_min=0.0,
                      lambda: tf.zeros([n], dtype=tf.int32)+y,
                      lambda: y)
 
-    if isinstance(nb_epoch, float):
-        tmp = tf.to_float(tf.size(x[0])) * nb_epoch
-        nb_epoch = tf.to_int32(tf.floor(tmp))
+    if isinstance(epochs, float):
+        tmp = tf.to_float(tf.size(x[0])) * epochs
+        epochs = tf.to_int32(tf.floor(tmp))
 
     def _fn(i):
         # `xi` is of the shape (1, ....), the first dimension is the
@@ -21,7 +21,7 @@ def smda(model, x, y, nb_epoch=1.0, eps=1.0, clip_min=0.0,
         yi = tf.gather(target, i)
 
         # `xadv` is of the shape (1, ...), same as xi.
-        xadv = _smda_impl(model, xi, yi, nb_epoch=nb_epoch, eps=eps,
+        xadv = _smda_impl(model, xi, yi, epochs=epochs, eps=eps,
                           clip_min=clip_min, clip_max=clip_max,
                           min_proba=min_proba)
         return xadv[0]
@@ -30,14 +30,14 @@ def smda(model, x, y, nb_epoch=1.0, eps=1.0, clip_min=0.0,
                      back_prop=False, name='smda_batch')
 
 
-def _smda_impl(model, xi, yi, nb_epoch, eps=1.0, clip_min=0.0,
+def _smda_impl(model, xi, yi, epochs, eps=1.0, clip_min=0.0,
                clip_max=1.0, min_proba=0.0):
 
     def _cond(x_adv, epoch, pixel_mask):
         ybar = tf.reshape(model(x_adv), [-1])
         proba = ybar[yi]
         label = tf.to_int32(tf.argmax(ybar, axis=0))
-        return tf.reduce_all([tf.less(epoch, nb_epoch),
+        return tf.reduce_all([tf.less(epoch, epochs),
                               tf.reduce_any(pixel_mask),
                               tf.logical_or(tf.not_equal(yi, label),
                                             tf.less(proba, min_proba))],
