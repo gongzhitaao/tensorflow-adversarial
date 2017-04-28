@@ -18,7 +18,7 @@ fgsm(model, x, eps=0.01, epochs=1, clip_min=0.0, clip_max=1.0)
 - [[https://arxiv.org/abs/1607.02533][Target class Gradient Sign Method (TGSM)]]
 
   #+BEGIN_SRC python
-tgsm(model, x, y=None, eps=0.01, epoch=1, clip_min=0.0, clip_max=1.0)
+tgsm(model, x, y=None, eps=0.01, epochs=1, clip_min=0.0, clip_max=1.0)
   #+END_SRC
 
   1. When =y=None=, this implements the least-likely class method.
