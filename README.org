@@ -143,6 +143,7 @@ former uses Tensorflow platform while the latter uses Keras platform.
 - [ ] Add ImageNet examples
 - [ ] Add attack method from https://arxiv.org/abs/1507.00677
 - [ ] Add attack method from https://arxiv.org/abs/1608.04644
+- [ ] Add houdini attack from https://arxiv.org/abs/1707.05373
 - [ ] Add benchmark for various defense methods.  There are so many of them,
   probably need a good survey, e.g. https://arxiv.org/abs/1705.07263.
 
