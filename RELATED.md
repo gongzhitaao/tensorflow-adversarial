@@ -1,29 +1,29 @@
-# Highlights <code>[0/2]</code>
+# Highlights [0/2]
 
 -   [ ] [<a href="#fawzi2016-robustness">8</a>]
 -   [ ] [<a href="#szegedy2013-intriguing">48</a>]
 
 
-# Related <code>[17/53]</code>
+# Related [17/53]
 
 -   [ ] [<a href="#baluja2017-adversarial">1</a>]
 -   [X] [<a href="#bradshaw2017-adversarial">2</a>] DNNs combined with gaussian processes are
     shown to be more robust to adversarial examples.
 -   [X] [<a href="#carlini2016-towards">3</a>] proposes another adversarial attacking method.
--   [-] [<a href="#cisse2017-parseval">4</a>] TODO
+-   [ ] [<a href="#cisse2017-parseval">4</a>]
 -   [X] [<a href="#dalvi2004-adversarial">5</a>] assumes that training data may be adversarially
     manipulated by attackers, e.g., spam/fraud/intrusion detection.  They view
     formulate this as a game between the defender and attacker.
 -   [X] [<a href="#dong2017-towards">6</a>] leverages adversarial examples to help interpret the
     mechanism of DNN.
 -   [ ] [<a href="#fawzi2015-analysis">7</a>]
--   [-] [<a href="#gao2017-deepcloak">9</a>] masks off "redundant" features to defend against
+-   [ ] [<a href="#gao2017-deepcloak">9</a>] masks off "redundant" features to defend against
     adversarials.  However it also limits the model's ability to generalize.
--   [-] [<a href="#gondara2017-detecting">10</a>] density ratio of real-real is close to 1, while
+-   [ ] [<a href="#gondara2017-detecting">10</a>] density ratio of real-real is close to 1, while
     real-adversarial is far away from 1.
 -   [X] [<a href="#goodfellow2014-explaining">11</a>] hypothesizes that neural networks are too
     linear to resist linear adversarial perturbation, e.g., FGSM.
--   [-] [<a href="#grosse2017-detection">12</a>]
+-   [ ] [<a href="#grosse2017-detection">12</a>]
 -   [X] [<a href="#gu2014-towards">13</a>] tried (de-noise) autoencoder to recover adversarial
     samples.  Despite that their experiment looks promising, they only use MNIST
     as benchmark.
@@ -92,6 +92,7 @@
 -   [ ] [<a href="#xie2017-adversarial">54</a>]
 -   [ ] [<a href="#xu2009-robustness">55</a>]
 
+# References
 
 <table>
 
