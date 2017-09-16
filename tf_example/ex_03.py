@@ -107,8 +107,8 @@ env.optim = tf.train.AdamOptimizer().minimize(env.loss)
 # Note the reuse=True flag
 with tf.variable_scope('model', reuse=True):
     env.target = tf.placeholder(tf.int32, ())
-    env.x_adv = smda(model, env.x, env.target, epochs=0.1,
-                     min_proba=0.8)
+    env.x_adv = smda(model, env.x, env.target, eps=1.0, epochs=50,
+                     min_proba=1.1)
 
 # --------------------------------------------------------------------
 
