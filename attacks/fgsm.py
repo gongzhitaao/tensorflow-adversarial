@@ -2,7 +2,22 @@ import tensorflow as tf
 
 
 def fgsm(model, x, eps=0.01, epochs=1, clip_min=0., clip_max=1.):
+    """
+    Fast gradient sign method.
 
+    See https://arxiv.org/abs/1412.6572 and https://arxiv.org/abs/1607.02533 for
+    details.  This implements the revised version, since the original FGSM has
+    label leaking problem.
+
+    :param model: A wrapper that returns the output as well as logits.
+    :param x: The input placeholder.
+    :param eps: The scale factor for noise.
+    :param epochs: The maximum epoch to run.
+    :param clip_min: The minimum value in output.
+    :param clip_max: The maximum value in output.
+
+    :return: A tensor, contains adversarial samples for each input.
+    """
     x_adv = tf.identity(x)
 
     ybar = model(x_adv)
@@ -26,6 +41,6 @@ def fgsm(model, x, eps=0.01, epochs=1, clip_min=0., clip_max=1.):
         x_adv = tf.clip_by_value(x_adv, clip_min, clip_max)
         return x_adv, i+1
 
-    x_adv, i = tf.while_loop(_cond, _body, (x_adv, 0),
-                             back_prop=False, name='fgsm')
+    x_adv, _ = tf.while_loop(_cond, _body, (x_adv, 0), back_prop=False,
+                             name='fgsm')
     return x_adv
