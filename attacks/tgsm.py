@@ -2,7 +2,26 @@ import tensorflow as tf
 
 
 def tgsm(model, x, y=None, eps=0.01, epochs=1, clip_min=0., clip_max=1.):
+    """
+    Target class gradient sign method.
 
+    See https://arxiv.org/pdf/1607.02533.pdf.  This method is similar to FGSM.
+    The only difference is that
+
+        1. TGSM allows to specify the desired label, i.e., targeted attack.
+
+        2. Modified towards the least-likely class label when desired label is
+           not specified.
+
+    :param model: A model that returns the output as well as logits.
+    :param x: The input placeholder.
+    :param y: The desired target label, set to the least-likely class if not
+              specified.
+    :param eps: The noise scale factor.
+    :param epochs: Maximum epoch to run.
+    :param clip_min: Minimum value in output.
+    :param clip_max: Maximum value in output.
+    """
     x_adv = tf.identity(x)
     eps = -tf.abs(eps)
     ybar = model(x_adv)
@@ -33,6 +52,6 @@ def tgsm(model, x, y=None, eps=0.01, epochs=1, clip_min=0., clip_max=1.):
         x_adv = tf.clip_by_value(x_adv, clip_min, clip_max)
         return x_adv, i+1
 
-    x_adv, i = tf.while_loop(_cond, _body, (x_adv, 0),
-                             back_prop=False, name='tgsm')
+    x_adv, _ = tf.while_loop(_cond, _body, (x_adv, 0), back_prop=False,
+                             name='tgsm')
     return x_adv
