@@ -1,4 +1,7 @@
-# Table of Contents
+Craft Image Adversarial Samples with Tensorflow
+===============================================
+
+## Table of Contents
 
 1. [API](#api)
 2. [The `model`](#the-model)
@@ -12,7 +15,7 @@ The four attacking algorithms can be found in [attacks](attacks) folder.  The
 implementation adheres to the principle **tensor-in, tensor-out**.  They all
 return a Tensorflow operation which could be run through `sess.run(...)`.
 
-# API
+## API
 
 - Fast Gradient Sign Method (FGSM) [basic](https://arxiv.org/abs/1412.6572/)/[iterative](https://arxiv.org/abs/1607.02533)
 
@@ -51,7 +54,7 @@ return a Tensorflow operation which could be run through `sess.run(...)`.
   `dt/dx * (-do/dx)`, while in SMDA, the saliency score is `dt/dx - do/dx`, thus
   the name "saliency map difference".
 
-# The `model`
+## The `model`
 
 Notice that we have `model` as the first parameter for every method.  The
 `model` is a wrapper function.  It should have the following signature
@@ -59,8 +62,8 @@ Notice that we have `model` as the first parameter for every method.  The
 ```python
 def model(x, logits=False):
   # x is the input to the network, usually a tensorflow placeholder
-  y = your_model(x)
-  logits_ = ...               # get the logits before softmax
+  ybar = ...                    # get the prediction
+  logits_ = ...                 # get the logits before softmax
   if logits:
     return y, logits
   return y
@@ -69,7 +72,7 @@ def model(x, logits=False):
 We need the logits because some algorithms (FGSM and TGSM) rely on the logits to
 compute the loss.
 
-# How to Use
+## How to Use
 
 Implementation of each attacking method is self-contained, and depends only on
 `tensorflow`.  Copy the attacking method file to the same folder as your source
@@ -77,20 +80,20 @@ code and import it.
 
 The implementation should work on any framework that is **compatible** with
 Tensorflow.  I provide example code for Tensorflow and Keras in the folder
-<tf_example> and <keras_example>, respectively.  Each code example is also
+[tf_example](./tf_example) and [keras_example](./keras_example), respectively.  Each code example is also
 self-contained.
 
 And example code with the same file name implements the same function.  For
-example, <tf_example/ex_00.py> and <keras_example/ex_00.py> implement exactly
-the same function, the only difference is that the former uses Tensorflow
-platform while the latter uses Keras platform.
+example, [tf_example/ex_00.py](tf_example/ex_00.py) and [keras_example/ex_00.py](keras_example/ex_00.py) implement
+exactly the same function, the only difference is that the former uses pure
+Tensorflow while the latter is built upon Keras.
 
-# Results
+## Results
 
-- ex_00.py trains a simple CNN on MNIST.  Then craft adversarial
-  samples from test data vis FGSM.  The original label for the following digits
-  are 0 through 9 originally, and the predicted label with probability are shown
-  below each digit.
+- ex_00.py trains a simple CNN on MNIST.  Then craft adversarial samples from
+  test data vis FGSM.  The original label for the following digits are 0 through
+  9 originally, and the predicted label with probability are shown below each
+  digit.
 
   ![img](img/ex_00.png)
 
@@ -100,8 +103,8 @@ platform while the latter uses Keras platform.
 
   ![img](img/ex_01.png)
 
-- ex_02.py creates cross label adversarial images via target class
-  gradient sign method (TGSM).
+- ex_02.py creates cross label adversarial images via target class gradient sign
+  method (TGSM).
 
   ![img](img/ex_02.png)
 
@@ -110,20 +113,25 @@ platform while the latter uses Keras platform.
 
   ![img](img/ex_03.png)
 
-  These images look weird.  And I have no idea why I could not reproduce the
-  result in the original paper.  My guess is that
-
-  1. either my model is too simple to catch the features of the dataset, or
-  2. there is a flaw in my implementation.
-
-  However various experiments seem to suggest that my implementation work
-  properly.  I have to try more examples to figure out what is going wrong here.
-
-- ex_04.py creates digits from blank images via paired saliency map
-  algorithm, i.e., modify two pixels at one time (refer to the original paper
-  for rational http://arxiv.org/abs/1511.07528).
+- ex_04.py creates digits from blank images via paired saliency map algorithm,
+  i.e., modify two pixels at one time (refer to the original paper for rational
+  http://arxiv.org/abs/1511.07528).
 
   ![img](img/ex_04.png)
+
+  ~~These images look weird.  And I have no idea why I could not reproduce the
+  result in the original paper.  My guess is that~~
+
+  ~~1. either my model is too simple to catch the features of the dataset, or~~
+  ~~2. there is a flaw in my implementation.~~
+
+  ~~However various experiments seem to suggest that my implementation work
+  properly.  I have to try more examples to figure out what is going wrong
+  here.~~
+
+  As suggested by [Nicolas](https://papernot.fr/), I run JSMA for fixed epochs, and I could
+  reproduce the images in his original paper.  So it seems my JSMA
+  implementation is correct.
 
 - ex_05.py trains a simple CNN on MNIST and then crafts adversarial samples via
   LLCM.  The original label for the following digits are 0 through 9 originally,
@@ -135,7 +143,7 @@ platform while the latter uses Keras platform.
 
   ![img](img/ex_06.png)
 
-# Future Work
+## Future Work
 
 - [ ] Update code with newer API from TensorFlow v1.3
 - [ ] Add ImageNet examples
@@ -145,7 +153,7 @@ platform while the latter uses Keras platform.
 - [ ] Add benchmark for various defense methods.  There are so many of them,
   probably need a good survey, e.g. https://arxiv.org/abs/1705.07263.
 
-# Related Work
+## Related Work
 
 - [openai/cleverhans](https://github.com/openai/cleverhans)
 - A list of related papers could be found [RELATED.md](./RELATED.md).
