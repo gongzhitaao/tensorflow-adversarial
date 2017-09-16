@@ -4,11 +4,12 @@ Craft Image Adversarial Samples with Tensorflow
 ## Table of Contents
 
 1. [API](#api)
-2. [The `model`](#the-model)
-3. [How to Use](#how-to-use)
-4. [Results](#results)
-5. [Future Work](#future-work)
-6. [Related Work](#related-work)
+2. [Dependencies](#dependencies)
+3. [The `model`](#the-model)
+4. [How to Use](#how-to-use)
+5. [Results](#results)
+6. [Future Work](#future-work)
+7. [Related Work](#related-work)
 
 Four [adversarial image](https://arxiv.org/abs/1312.6199) crafting algorithms are implemented with Tensorflow.
 The four attacking algorithms can be found in [attacks](attacks) folder.  The
@@ -53,6 +54,14 @@ return a Tensorflow operation which could be run through `sess.run(...)`.
   the saliency score is calculated.  In JSMA, saliency score is calculated as
   `dt/dx * (-do/dx)`, while in SMDA, the saliency score is `dt/dx - do/dx`, thus
   the name "saliency map difference".
+
+## Dependencies
+
+1. Python3, samples codes uses many of the Python3 features.
+2. Numpy, only needed in sample codes.
+3. Tensorflow, tested with Tensorflow 1.1 and 1.3.  Since there is no change in
+   the API (only minor version number change), it should work with other
+   versions as well.
 
 ## The `model`
 
