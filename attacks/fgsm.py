@@ -7,7 +7,7 @@ def fgsm(model, x, eps=0.01, epochs=1, clip_min=0., clip_max=1.):
 
     See https://arxiv.org/abs/1412.6572 and https://arxiv.org/abs/1607.02533 for
     details.  This implements the revised version, since the original FGSM has
-    label leaking problem.
+    label leaking problem (https://arxiv.org/abs/1611.01236).
 
     :param model: A wrapper that returns the output as well as logits.
     :param x: The input placeholder.
@@ -23,7 +23,9 @@ def fgsm(model, x, eps=0.01, epochs=1, clip_min=0., clip_max=1.):
     ybar = model(x_adv)
     yshape = tf.shape(ybar)
     ydim = yshape[1]
-    indices = tf.argmax(ybar, axis=1)
+    indices = tf.cond(tf.equal(ydim, 1),
+                      lambda: tf.cast(tf.less(ybar, 0.5), tf.int64),
+                      lambda: tf.argmax(ybar, axis=1))
     target = tf.one_hot(indices, ydim, on_value=clip_max,
                         off_value=clip_min)
 
