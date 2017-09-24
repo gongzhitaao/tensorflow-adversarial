@@ -23,11 +23,12 @@ def fgsm(model, x, eps=0.01, epochs=1, clip_min=0., clip_max=1.):
     ybar = model(x_adv)
     yshape = tf.shape(ybar)
     ydim = yshape[1]
-    indices = tf.cond(
+
+    indices = tf.argmax(ybar, axis=1)
+    target = tf.cond(
         tf.equal(ydim, 1),
-        lambda: tf.reshape(tf.cast(tf.less(ybar, 0.5), tf.int64), [-1]),
-        lambda: tf.argmax(ybar, axis=1))
-    target = tf.one_hot(indices, ydim, on_value=1.0, off_value=0.0)
+        lambda: tf.nn.relu(tf.sign(0.5 - ybar)),
+        lambda: tf.one_hot(indices, ydim, on_value=1.0, off_value=0.0))
 
     eps = tf.abs(eps)
 
