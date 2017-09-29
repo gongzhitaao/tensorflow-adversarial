@@ -27,7 +27,7 @@ def fgsm(model, x, eps=0.01, epochs=1, clip_min=0., clip_max=1.):
     indices = tf.argmax(ybar, axis=1)
     target = tf.cond(
         tf.equal(ydim, 1),
-        lambda: tf.nn.relu(tf.sign(0.5 - ybar)),
+        lambda: tf.nn.relu(tf.sign(ybar - 0.5)),
         lambda: tf.one_hot(indices, ydim, on_value=1.0, off_value=0.0))
 
     eps = tf.abs(eps)
