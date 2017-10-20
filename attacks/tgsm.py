@@ -26,19 +26,18 @@ def tgsm(model, x, y=None, eps=0.01, epochs=1, clip_min=0., clip_max=1.):
     eps = -tf.abs(eps)
     ybar = model(x_adv)
     yshape = tf.shape(ybar)
-    ydim = yshape[1]
+    n, ydim = yshape[0], yshape[1]
 
     if y is None:
         indices = tf.argmin(ybar, axis=1)
     else:
-        xshape = tf.shape(x)
-        n = xshape[0]
         indices = tf.cond(tf.equal(0, tf.rank(y)),
-                          lambda: tf.zeros([n], dtype=tf.int32)+y,
+                          lambda: tf.zeros([n], dtype=tf.int32) + y,
                           lambda: y)
 
-    target = tf.one_hot(indices, ydim, on_value=clip_max,
-                        off_value=clip_min)
+    target = tf.cond(tf.equal(ydim, 1),
+                     lambda: scale * (1 - ybar))
+    tf.one_hot(indices, ydim, on_value=1.0, off_value=0.0)
 
     def _cond(x_adv, i):
         return tf.less(i, epochs)
