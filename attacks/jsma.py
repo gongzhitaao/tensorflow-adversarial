@@ -29,7 +29,7 @@ def jsma(model, x, y, epochs=1.0, eps=1.0, clip_min=0.0, clip_max=1.0,
     xshape = tf.shape(x)
     n = xshape[0]
     target = tf.cond(tf.equal(0, tf.rank(y)),
-                     lambda: tf.zeros([n], dtype=tf.int32)+y,
+                     lambda: tf.zeros([n], dtype=tf.int32) + y,
                      lambda: y)
 
     if isinstance(epochs, float):
@@ -109,13 +109,12 @@ def _jsma_impl(model, xi, yi, epochs, eps=1.0, clip_min=0.0, clip_max=1.0,
 
         return x_adv, epoch, pixel_mask
 
-    epoch = tf.Variable(0, tf.int32)
     x_adv = tf.identity(xi)
     pixel_mask = tf.cond(tf.greater(eps, 0),
                          lambda: tf.less(xi, clip_max),
                          lambda: tf.greater(xi, clip_min))
 
-    x_adv, _, _ = tf.while_loop(_cond, _body, (x_adv, epoch, pixel_mask),
+    x_adv, _, _ = tf.while_loop(_cond, _body, (x_adv, 0, pixel_mask),
                                 back_prop=False, name='jsma_step')
 
     return x_adv
@@ -208,8 +207,6 @@ def _jsma2_impl(model, xi, yi, epochs, eps=1.0, clip_min=0.0, clip_max=1.0,
 
         i = tf.to_int32(tf.gather(ind, 0))
         j = tf.to_int32(tf.gather(ind, 1))
-        v = tf.Variable(-1.)
-        start = tf.Variable(0)
 
         # Find max saliency pair in batch.  Naive iteration through the pair
         # takes O(n^2).  Vectorized implementation may speedup the running time
@@ -217,7 +214,7 @@ def _jsma2_impl(model, xi, yi, epochs, eps=1.0, clip_min=0.0, clip_max=1.0,
         # max pair with batch max, during each batch we use vectorized
         # implementation.
         i, j, _, _ = tf.while_loop(_maxpair_batch_cond, _maxpair_batch_body,
-                                   (i, j, v, start), back_prop=False)
+                                   (i, j, -1., 0), back_prop=False)
 
         dx = tf.scatter_nd([i], [eps], tf.shape(x_adv)) +\
              tf.scatter_nd([j], [eps], tf.shape(x_adv))
