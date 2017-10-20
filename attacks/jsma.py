@@ -231,11 +231,10 @@ def _jsma2_impl(model, xi, yi, epochs, eps=1.0, clip_min=0.0, clip_max=1.0,
 
         return x_adv, epoch, pixel_mask
 
-    epoch = tf.Variable(0, tf.int32)
     x_adv = tf.identity(xi)
     pixel_mask = tf.cond(tf.greater(eps, 0),
                          lambda: tf.less(xi, clip_max),
                          lambda: tf.greater(xi, clip_min))
-    x_adv, _, _ = tf.while_loop(_cond, _body, (xi, epoch, pixel_mask),
+    x_adv, _, _ = tf.while_loop(_cond, _body, (xi, 0, pixel_mask),
                                 back_prop=False, name='jsma2_step')
     return x_adv
