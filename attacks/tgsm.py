@@ -23,9 +23,9 @@ def tgsm(model, x, y=None, eps=0.01, epochs=1, clip_min=0., clip_max=1.):
     :param clip_max: Maximum value in output.
     """
     x_adv = tf.identity(x)
-    eps = -tf.abs(eps)
+
     ybar = model(x_adv)
-    yshape = tf.shape(ybar)
+    yshape = ybar.get_shape().as_list()
     n, ydim = yshape[0], yshape[1]
 
     if y is None:
@@ -33,19 +33,26 @@ def tgsm(model, x, y=None, eps=0.01, epochs=1, clip_min=0., clip_max=1.):
     else:
         indices = tf.cond(tf.equal(0, tf.rank(y)),
                           lambda: tf.zeros([n], dtype=tf.int32) + y,
-                          lambda: y)
+                          lambda: tf.zeros([n], dtype=tf.int32))
 
-    target = tf.cond(tf.equal(ydim, 1),
-                     lambda: scale * (1 - ybar))
-    tf.one_hot(indices, ydim, on_value=1.0, off_value=0.0)
+    target = tf.cond(
+        tf.equal(ydim, 1),
+        lambda: scale * (1 - ybar),
+        lambda: tf.one_hot(indices, ydim, on_value=1.0, off_value=0.0))
+
+    if 1 == ydim:
+        loss_fn = tf.nn.sigmoid_cross_entropy_with_logits
+    else:
+        loss_fn = tf.nn.softmax_cross_entropy_with_logits
+
+    eps = -tf.abs(eps)
 
     def _cond(x_adv, i):
         return tf.less(i, epochs)
 
     def _body(x_adv, i):
         ybar, logits = model(x_adv, logits=True)
-        loss = tf.nn.softmax_cross_entropy_with_logits(
-            labels=target, logits=logits)
+        loss = loss_fn(labels=target, logits=logits)
         dy_dx, = tf.gradients(loss, x_adv)
         x_adv = tf.stop_gradient(x_adv + eps*tf.sign(dy_dx))
         x_adv = tf.clip_by_value(x_adv, clip_min, clip_max)

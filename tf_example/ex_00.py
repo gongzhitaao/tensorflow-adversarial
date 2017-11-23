@@ -49,8 +49,10 @@ X_train, y_train = X_train[ind], y_train[ind]
 # split training/validation dataset
 validation_split = 0.1
 n_train = int(X_train.shape[0]*(1-validation_split))
-X_train, X_valid = X_train[:n_train], X_train[n_train:]
-y_train, y_valid = y_train[:n_train], y_train[n_train:]
+X_valid = X_train[n_train:]
+X_train = X_train[:n_train]
+y_valid = y_train[n_train:]
+y_train = y_train[:n_train]
 
 # --------------------------------------------------------------------
 
