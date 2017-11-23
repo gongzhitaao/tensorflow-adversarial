@@ -76,11 +76,16 @@ else:
     os.makedirs('model', exist_ok=True)
     model.save('model/ex_02.h5')
 
+def model_fn(x, logits=False):
+    ybar = model(x)
+    logits_, = ybar.op.inputs
+    if logits:
+        return ybar, logits_
+    return ybar
 
 x = tf.placeholder(tf.float32, (None, img_rows, img_cols, img_chas))
 y = tf.placeholder(tf.int32, ())
-x_adv = tgsm(model, x, y, eps=0.01, epochs=30)
-
+x_adv = tgsm(model_fn, x, y, eps=0.01, epochs=30)
 
 print('\nTest against clean data')
 score = model.evaluate(X_test, y_test)
