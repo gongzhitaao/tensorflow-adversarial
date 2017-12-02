@@ -5,9 +5,9 @@ def fgsm(model, x, eps=0.01, epochs=1, clip_min=0., clip_max=1.):
     """
     Fast gradient sign method.
 
-    See https://arxiv.org/abs/1412.6572 and https://arxiv.org/abs/1607.02533 for
-    details.  This implements the revised version, since the original FGSM has
-    label leaking problem (https://arxiv.org/abs/1611.01236).
+    See https://arxiv.org/abs/1412.6572 and https://arxiv.org/abs/1607.02533
+    for details.  This implements the revised version, since the original FGSM
+    has label leaking problem (https://arxiv.org/abs/1611.01236).
 
     :param model: A wrapper that returns the output as well as logits.
     :param x: The input placeholder.
