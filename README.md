@@ -69,9 +69,7 @@ return a Tensorflow operation which could be run through `sess.run(...)`.
 
 1. Python3, samples codes uses many of the Python3 features.
 2. Numpy, only needed in sample codes.
-3. Tensorflow, tested with Tensorflow 1.1 and 1.3.  Since there is no change in
-   the API (only minor version number change), it should work with other
-   versions as well.
+3. Tensorflow, tested with Tensorflow 1.4.
 
 ## The `model`
 
