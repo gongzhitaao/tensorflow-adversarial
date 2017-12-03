@@ -55,6 +55,17 @@ return a Tensorflow operation which could be run through `sess.run(...)`.
   `dt/dx * (-do/dx)`, while in SMDA, the saliency score is `dt/dx - do/dx`, thus
   the name "saliency map difference".
 
+- [DeepFool](https://arxiv.org/abs/1511.04599)
+
+  ```python
+  deepfool(model, x, noise=False, eta=0.01, ord_=2, epochs=3, clip_min=0.0,
+  clip_max=1.0, min_prob=0.0)
+  ```
+
+  If `noise` is `True`, the return value is `xadv, noise`, otherwise only `xadv`
+  is returned.  `ord_` controls which norm to use, could be any real value in
+  `[1, inf)`.
+
 ## Dependencies
 
 1. Python3, samples codes uses many of the Python3 features.
