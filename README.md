@@ -58,8 +58,7 @@ return a Tensorflow operation which could be run through `sess.run(...)`.
 - [DeepFool](https://arxiv.org/abs/1511.04599)
 
   ```python
-  deepfool(model, x, noise=False, eta=0.01, ord_=2, epochs=3, clip_min=0.0,
-  clip_max=1.0, min_prob=0.0)
+  deepfool(model, x, noise=False, eta=0.01, ord_=2, epochs=3, clip_min=0.0, clip_max=1.0, min_prob=0.0)
   ```
 
   If `noise` is `True`, the return value is `xadv, noise`, otherwise only `xadv`
