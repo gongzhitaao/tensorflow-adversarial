@@ -1,3 +1,11 @@
-*~
-*.jpg
-dbg_*
+*
+!img
+!img/*.png
+!attacks
+!attacks/*.py
+!example
+!example/*.py
+!.travis.yml
+!.gitignore
+!README
+!LICENSE
