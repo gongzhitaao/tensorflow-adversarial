@@ -1,4 +1,2 @@
-from .fgsm import fgsm
-from .jsma import jsma
-from .tgsm import tgsm
-from .deepfool import deepfool
+from .fast_gradient import *
+from .saliency_map import *

@@ -1,3 +1,8 @@
+"""
+Use fast gradient sign method to craft adversarial on MNIST.
+
+Dependencies: python3, tensorflow v1.4, numpy, matplotlib
+"""
 import os
 
 import numpy as np
@@ -9,10 +14,8 @@ import matplotlib.gridspec as gridspec
 
 import tensorflow as tf
 
-from attacks import fgsm
+from attacks import fgm
 
-
-tf.logging.set_verbosity(tf.logging.ERROR)
 
 img_size = 28
 img_chan = 1
@@ -107,7 +110,7 @@ with tf.variable_scope('model'):
 with tf.variable_scope('model', reuse=True):
     env.fgsm_eps = tf.placeholder(tf.float32, (), name='fgsm_eps')
     env.fgsm_epochs = tf.placeholder(tf.int32, (), name='fgsm_epochs')
-    env.x_fgsm = fgsm(model, env.x, epochs=env.fgsm_epochs, eps=env.fgsm_eps)
+    env.x_fgsm = fgm(model, env.x, epochs=env.fgsm_epochs, eps=env.fgsm_eps)
 
 print('\nInitializing graph')
 
@@ -231,8 +234,8 @@ def make_fgsm(sess, env, X_data, epochs=1, eps=0.01, batch_size=128):
 
 print('\nTraining')
 
-train(sess, env, X_train, y_train, X_valid, y_valid, load=True, epochs=5,
-      name='fgsm_mnist')
+train(sess, env, X_train, y_train, X_valid, y_valid, load=False, epochs=5,
+      name='mnist')
 
 print('\nEvaluating on clean data')
 
