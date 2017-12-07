@@ -51,7 +51,7 @@ def _prod(iterable):
     return ret
 
 
-def _jsma_impl(model, x, yind, epochs, eps=1.0, clip_min=0.0, clip_max=1.0):
+def _jsma_impl(model, x, yind, epochs, eps, clip_min, clip_max):
 
     def _cond(i, xadv):
         return tf.less(i, epochs)
@@ -96,12 +96,12 @@ def _jsma_impl(model, x, yind, epochs, eps=1.0, clip_min=0.0, clip_max=1.0):
     return xadv
 
 
-def _jsma2_impl(model, x, yind, epochs, eps=1.0, clip_min=0.0, clip_max=1.0):
+def _jsma2_impl(model, x, yind, epochs, eps, clip_min, clip_max):
 
-    def _cond(i, xadv):
-        return tf.less(i, epochs)
+    def _cond(k, xadv):
+        return tf.less(k, epochs)
 
-    def _body(i, xadv):
+    def _body(k, xadv):
         ybar = model(xadv)
 
         dy_dx = tf.gradients(ybar, xadv)[0]
@@ -131,11 +131,7 @@ def _jsma2_impl(model, x, yind, epochs, eps=1.0, clip_min=0.0, clip_max=1.0):
         ij = tf.argmax(score2, axis=1)
 
         i = tf.to_int32(ij / dim)
-        j = ij % dim
-
-        ind = tf.range(tf.shape(xadv)[0])
-        i = tf.stack((ind, i), axis=1)
-        j = tf.stack((ind, j), axis=1)
+        j = tf.to_int32(ij) % dim
 
         dxi = tf.one_hot(i, dim, on_value=eps, off_value=0.0)
         dxj = tf.one_hot(j, dim, on_value=eps, off_value=0.0)
@@ -144,7 +140,7 @@ def _jsma2_impl(model, x, yind, epochs, eps=1.0, clip_min=0.0, clip_max=1.0):
         xadv = tf.stop_gradient(xadv + dx)
         xadv = tf.clip_by_value(xadv, clip_min, clip_max)
 
-        return i+1, xadv
+        return k+1, xadv
 
     _, xadv = tf.while_loop(_cond, _body, (0, tf.identity(x)),
                             back_prop=False, name='_jsma2_batch')
