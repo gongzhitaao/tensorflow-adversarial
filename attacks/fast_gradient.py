@@ -7,8 +7,7 @@ __all__ = [
 ]
 
 
-def fgm(model, x, y=None, eps=0.01, epochs=1, sign=True, clip_min=0.,
-        clip_max=1.):
+def fgm(model, x, eps=0.01, epochs=1, sign=True, clip_min=0., clip_max=1.):
     """
     Fast gradient method.
 
