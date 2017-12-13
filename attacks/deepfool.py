@@ -1,8 +1,11 @@
 import tensorflow as tf
 
 
-def deepfool(model, x, noise=False, eta=0.01, ord_=2, epochs=3,
-             clip_min=0.0, clip_max=1.0, min_prob=0.0):
+__all__ = ['deepfool']
+
+
+def deepfool(model, x, noise=False, eta=0.01, ord_=2, epochs=3, clip_min=0.0,
+             clip_max=1.0, min_prob=0.0):
     """DeepFool implementation in Tensorflow.
 
     See https://arxiv.org/abs/1511.04599 for details.
