@@ -4,7 +4,8 @@ import tensorflow as tf
 __all__ = ['jsma']
 
 
-def jsma(model, x, y=None, epochs=1, eps=1.0, k=1, clip_min=0.0, clip_max=1.0):
+def jsma(model, x, y=None, epochs=1, eps=1.0, k=1, clip_min=0.0, clip_max=1.0,
+         score_fn=lambda t, o: t * tf.abs(o)):
     """
     Jacobian-based saliency map approach.
 
@@ -24,6 +25,7 @@ def jsma(model, x, y=None, epochs=1, eps=1.0, k=1, clip_min=0.0, clip_max=1.0):
               2 will raise an error.
     :param clip_min: The minimum value in output tensor.
     :param clip_max: The maximum value in output tensor.
+    :param score_fn: Function to calculate the saliency score.
 
     :return: A tensor, contains adversarial samples for each input.
     """
@@ -44,7 +46,7 @@ def jsma(model, x, y=None, epochs=1, eps=1.0, k=1, clip_min=0.0, clip_max=1.0):
         _jsma_fn = _jsma_impl
 
     return _jsma_fn(model, x, target, epochs=epochs, eps=eps,
-                    clip_min=clip_min, clip_max=clip_max)
+                    clip_min=clip_min, clip_max=clip_max, score_fn=score_fn)
 
 
 def _prod(iterable):
@@ -54,7 +56,7 @@ def _prod(iterable):
     return ret
 
 
-def _jsma_impl(model, x, yind, epochs, eps, clip_min, clip_max):
+def _jsma_impl(model, x, yind, epochs, eps, clip_min, clip_max, score_fn):
 
     def _cond(i, xadv):
         return tf.less(i, epochs)
@@ -77,7 +79,7 @@ def _jsma_impl(model, x, yind, epochs, eps, clip_min, clip_max):
         cond = tf.to_float(cond)
 
         # saliency score for each pixel
-        score = cond * dt_dx * tf.abs(do_dx)
+        score = cond * score_fn(dt_dx, do_dx)
 
         shape = score.get_shape().as_list()
         dim = _prod(shape[1:])
@@ -99,7 +101,7 @@ def _jsma_impl(model, x, yind, epochs, eps, clip_min, clip_max):
     return xadv
 
 
-def _jsma2_impl(model, x, yind, epochs, eps, clip_min, clip_max):
+def _jsma2_impl(model, x, yind, epochs, eps, clip_min, clip_max, score_fn):
 
     def _cond(k, xadv):
         return tf.less(k, epochs)
@@ -122,7 +124,7 @@ def _jsma2_impl(model, x, yind, epochs, eps, clip_min, clip_max):
         cond = tf.to_float(cond)
 
         # saliency score for each pixel
-        score = cond * dt_dx * tf.abs(do_dx)
+        score = cond * score_fn(dt_dx, do_dx)
 
         shape = score.get_shape().as_list()
         dim = _prod(shape[1:])
