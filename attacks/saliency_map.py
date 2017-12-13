@@ -1,6 +1,9 @@
 import tensorflow as tf
 
 
+__all__ = ['jsma']
+
+
 def jsma(model, x, y=None, epochs=1, eps=1.0, k=1, clip_min=0.0, clip_max=1.0):
     """
     Jacobian-based saliency map approach.
