@@ -319,4 +319,4 @@ for i in range(10):
 
 gs.tight_layout(fig)
 os.makedirs('img', exist_ok=True)
-plt.savefig('img/jsma_mnist.png')
+plt.savefig('img/jsma_mnist_10x10.png')
