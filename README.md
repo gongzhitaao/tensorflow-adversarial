@@ -40,7 +40,8 @@ return a Tensorflow operation which could be run through `sess.run(...)`.
 - [Jacobian-based Saliency Map Approach (JSMA)](https://arxiv.org/abs/1511.07528)
 
   ```python
-  jsma(model, x, y, epochs=1.0, eps=1., clip_min=0.0, clip_max=1.0, score_fn=lambda t, o: t * tf.abs(o))
+  jsma(model, x, y, epochs=1.0, eps=1., clip_min=0.0, clip_max=1.0,
+       score_fn=lambda t, o: t * tf.abs(o))
   ```
 
   `y` is the target label, could be an integer or a list.  when `epochs` is a
