@@ -27,57 +27,101 @@ def deepfool(model, x, noise=False, eta=0.01, ord_=2, epochs=3, clip_min=0.0,
     else:
         p = ord_ / (ord_ - 1.0)
 
+    y = tf.stop_gradient(model(x))
+    ydim = y.get_shape().as_list()[1]
+    if ydim > 1:
+        _deepfool_fn = _deepfoolx
+    else:
+        _deepfool_fn = _deepfool2
+
     def _fn(xi):
         xi = tf.expand_dims(xi, axis=0)
-        xadv, noise = _deepfool_impl(model, xi, p=p, eta=eta, epochs=epochs,
-                                     clip_min=clip_min, clip_max=clip_max,
-                                     min_prob=min_prob)
-        return xadv[0], noise[0]
+        noise = _deepfool_fn(model, xi, p=p, eta=eta, epochs=epochs,
+                             clip_min=clip_min, clip_max=clip_max,
+                             min_prob=min_prob)
+        return noise[0]
 
-    xadv, z = tf.map_fn(_fn, x, dtype=(tf.float32, tf.float32),
-                        back_prop=False, name='deepfool')
+    z = tf.map_fn(_fn, x, dtype=(tf.float32), back_prop=False,
+                  name='deepfool')
+    xadv = tf.clip_by_value(x + z*(1+eta), clip_min, clip_max)
 
     if noise:
         return xadv, z
     return xadv
 
 
-def _deepfool_impl(model, x, p, epochs, eta, clip_min, clip_max, min_prob):
-    y0 = tf.reshape(model(x), [-1])
+def _prod(iterable):
+    ret = 1
+    for x in iterable:
+        ret *= x
+    return ret
+
+
+def _deepfool2(model, x, p, epochs, eta, clip_min, clip_max, min_prob):
+    y0 = tf.stop_gradient(tf.reshape(model(x), [-1])[0])
+    y0 = tf.to_int32(tf.greater(y0, 0.5))
+
+    def _cond(i, z):
+        xadv = tf.clip_by_value(x + z*(1+eta), clip_min, clip_max)
+        y = tf.stop_gradient(tf.reshape(model(xadv), [-1])[0])
+        y = tf.to_int32(tf.greater(y, 0.5))
+        return tf.logical_and(tf.less(i, epochs), tf.equal(y0, y))
+
+    def _body(i, z):
+        xadv = tf.clip_by_value(x + z*(1+eta), clip_min, clip_max)
+        y = tf.reshape(model(xadv), [-1])[0]
+        g = tf.gradients(y, xadv)[0]
+        dx = - y * g / tf.norm(tf.reshape(g, [-1]))
+        return i+1, z+dx
+
+    _, noise = tf.while_loop(_cond, _body, [0, tf.zeros_like(x)],
+                             name='_deepfool2_impl', back_prop=False)
+    return noise
+
+
+def _deepfoolx(model, x, p, epochs, eta, clip_min, clip_max, min_prob):
+    y0 = tf.stop_gradient(model(x))
+    y0 = tf.reshape(y0, [-1])
     k0 = tf.argmax(y0)
 
-    def _cond(i, x, z):
-        y = tf.reshape(model(x), [-1])
+    ydim = y0.get_shape().as_list()[0]
+    xdim = x.get_shape().as_list()[1:]
+    xflat = _prod(xdim)
+
+    def _cond(i, z):
+        xadv = tf.clip_by_value(x + z*(1+eta), clip_min, clip_max)
+        y = tf.reshape(model(xadv), [-1])
         p = tf.reduce_max(y)
         k = tf.argmax(y)
         return tf.logical_and(tf.less(i, epochs),
                               tf.logical_or(tf.equal(k0, k),
                                             tf.less(p, min_prob)))
 
-    def _body(i, x, z):
-        y = tf.reshape(model(x), [-1])
+    def _body(i, z):
+        xadv = tf.clip_by_value(x + z*(1+eta), clip_min, clip_max)
+        y = tf.reshape(model(xadv), [-1])
 
-        ys = tf.unstack(y)
-        gs = [tf.reshape(tf.gradients(yi, x)[0], [-1]) for yi in ys]
+        gs = [tf.reshape(tf.gradients(y[i], xadv)[0], [-1])
+              for i in range(ydim)]
         g = tf.stack(gs, axis=0)
 
-        # The following implementation assumes that 1) 0/0 = tf.nan, 2) nan is
-        # ignored by tf.argmin().
-        a = tf.abs(y - y[k0])
-        b = tf.norm(g - g[k0], axis=1, ord=2)
-        score = a / b
+        yk, yo = y[k0], tf.concat((y[:k0], y[(k0+1):]), axis=0)
+        gk, go = g[k0], tf.concat((g[:k0], g[(k0+1):]), axis=0)
+
+        yo.set_shape(ydim - 1)
+        go.set_shape([ydim - 1, xflat])
+
+        a = tf.abs(yo - yk)
+        b = go - gk
+        c = tf.norm(b, axis=1, ord=p)
+        score = a / c
         ind = tf.argmin(score)
 
-        ai, bi, gi = a[ind], b[ind], g[ind]
-        dx = ai / tf.pow(bi, p) * tf.pow(bi, p-1) * gi
-        dx = tf.reshape(dx, x.get_shape().as_list())
+        si, bi, ci = score[ind], b[ind], c[ind]
+        dx = si * tf.pow(tf.abs(bi), p-1) / tf.pow(ci, p-1) * tf.sign(bi)
+        dx = tf.reshape(dx, [-1] + xdim)
+        return i+1, z+dx
 
-        x = tf.stop_gradient(x + dx*(1+eta))
-        x = tf.clip_by_value(x, clip_min, clip_max)
-        z = tf.stop_gradient(z + dx)
-        return i+1, x, z
-
-    _, xadv, noise = tf.while_loop(_cond, _body,
-                                   [0, tf.identity(x), tf.zeros_like(x)],
-                                   name='_deepfool_impl', back_prop=False)
-    return xadv, noise
+    _, noise = tf.while_loop(_cond, _body, [0, tf.zeros_like(x)],
+                             name='_deepfoolx_impl', back_prop=False)
+    return noise
