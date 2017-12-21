@@ -143,7 +143,8 @@ is *self-contained*.
 
 ## Related Work
 
-- [openai/cleverhans](https://github.com/openai/cleverhans)
+- [tensorflow/cleverhans](https://github.com/openai/cleverhans) Well maintained adversarial implementaion in TensorFlow.
+- [LTS4/DeepFool](https://github.com/LTS4/DeepFool) Author's code for deepfool in PyTorch and Matlab.
 
 ## Citation
 
