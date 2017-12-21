@@ -17,6 +17,9 @@ import tensorflow as tf
 from attacks import deepfool
 
 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
+
 img_size = 28
 img_chan = 1
 n_classes = 10
@@ -240,7 +243,7 @@ evaluate(sess, env, X_test, y_test)
 
 print('\nGenerating adversarial data')
 
-X_adv = make_deepfool(sess, env, X_test, epochs=5)
+X_adv = make_deepfool(sess, env, X_test, epochs=3)
 
 print('\nEvaluating on adversarial data')
 
