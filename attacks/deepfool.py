@@ -4,7 +4,7 @@ import tensorflow as tf
 __all__ = ['deepfool']
 
 
-def deepfool(model, x, noise=False, eta=0.01, ord_=2, epochs=3, clip_min=0.0,
+def deepfool(model, x, noise=False, eta=0.01, epochs=3, clip_min=0.0,
              clip_max=1.0, min_prob=0.0):
     """DeepFool implementation in Tensorflow.
 
@@ -14,7 +14,6 @@ def deepfool(model, x, noise=False, eta=0.01, ord_=2, epochs=3, clip_min=0.0,
     :param x: 2D or 4D input tensor.
     :param noise: Also return the noise if True.
     :param eta: Small overshoot value to cross the boundary.
-    :param ord_: Which norm to use in computation.
     :param epochs: Maximum epochs to run.
     :param clip_min: Min clip value for output.
     :param clip_max: Max clip value for output.
@@ -22,11 +21,6 @@ def deepfool(model, x, noise=False, eta=0.01, ord_=2, epochs=3, clip_min=0.0,
 
     :return: Adversarials, of the same shape as x.
     """
-    if float('Inf') == ord_:
-        p = 1.0
-    else:
-        p = ord_ / (ord_ - 1.0)
-
     y = tf.stop_gradient(model(x))
     ydim = y.get_shape().as_list()[1]
     if ydim > 1:
@@ -36,7 +30,7 @@ def deepfool(model, x, noise=False, eta=0.01, ord_=2, epochs=3, clip_min=0.0,
 
     def _fn(xi):
         xi = tf.expand_dims(xi, axis=0)
-        noise = _deepfool_fn(model, xi, p=p, eta=eta, epochs=epochs,
+        noise = _deepfool_fn(model, xi, eta=eta, epochs=epochs,
                              clip_min=clip_min, clip_max=clip_max,
                              min_prob=min_prob)
         return noise[0]
@@ -57,7 +51,7 @@ def _prod(iterable):
     return ret
 
 
-def _deepfool2(model, x, p, epochs, eta, clip_min, clip_max, min_prob):
+def _deepfool2(model, x, epochs, eta, clip_min, clip_max, min_prob):
     y0 = tf.stop_gradient(tf.reshape(model(x), [-1])[0])
     y0 = tf.to_int32(tf.greater(y0, 0.5))
 
@@ -71,7 +65,7 @@ def _deepfool2(model, x, p, epochs, eta, clip_min, clip_max, min_prob):
         xadv = tf.clip_by_value(x + z*(1+eta), clip_min, clip_max)
         y = tf.reshape(model(xadv), [-1])[0]
         g = tf.gradients(y, xadv)[0]
-        dx = - y * g / tf.norm(tf.reshape(g, [-1]))
+        dx = - y * g / tf.norm(g)
         return i+1, z+dx
 
     _, noise = tf.while_loop(_cond, _body, [0, tf.zeros_like(x)],
@@ -79,7 +73,7 @@ def _deepfool2(model, x, p, epochs, eta, clip_min, clip_max, min_prob):
     return noise
 
 
-def _deepfoolx(model, x, p, epochs, eta, clip_min, clip_max, min_prob):
+def _deepfoolx(model, x, epochs, eta, clip_min, clip_max, min_prob):
     y0 = tf.stop_gradient(model(x))
     y0 = tf.reshape(y0, [-1])
     k0 = tf.argmax(y0)
@@ -113,12 +107,12 @@ def _deepfoolx(model, x, p, epochs, eta, clip_min, clip_max, min_prob):
 
         a = tf.abs(yo - yk)
         b = go - gk
-        c = tf.norm(b, axis=1, ord=p)
+        c = tf.norm(b, axis=1)
         score = a / c
         ind = tf.argmin(score)
 
-        si, bi, ci = score[ind], b[ind], c[ind]
-        dx = si * tf.pow(tf.abs(bi), p-1) / tf.pow(ci, p-1) * tf.sign(bi)
+        si, bi = score[ind], b[ind]
+        dx = si * bi
         dx = tf.reshape(dx, [-1] + xdim)
         return i+1, z+dx
 
