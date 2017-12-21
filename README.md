@@ -54,12 +54,17 @@ return a Tensorflow operation which could be run through `sess.run(...)`.
 - [DeepFool](https://arxiv.org/abs/1511.04599)
 
   ```python
-  deepfool(model, x, noise=False, eta=0.01, ord_=2, epochs=3, clip_min=0.0, clip_max=1.0, min_prob=0.0)
+  deepfool(model, x, noise=False, eta=0.01, epochs=3, clip_min=0.0, clip_max=1.0, min_prob=0.0)
   ```
 
   If `noise` is `True`, the return value is `xadv, noise`, otherwise only `xadv`
-  is returned.  `ord_` controls which norm to use, could be any real value in
-  `[1, inf)`.
+  is returned.  Note that in my implementation, the noise if calculated as
+  `f/||w|| * w` instead of `f/||w|| * w/||w||`, where `||w||` is the L2 norm.
+  It seems that `||w||` is so small such that noise will explode when adding
+  it.  In the [original author's implementation](https://github.com/LTS4/DeepFool/blob/master/Python/deepfool.py#L71), they add a small value 1e-4
+  for numeric stability, I guess we might have similar issue here.  Anyway, this
+  factor does not change the direction of the noise, and in practice, the
+  adversarial noise is still subtle and hard to notice.
 
 ## Dependencies
 
