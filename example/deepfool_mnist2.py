@@ -21,6 +21,9 @@ import tensorflow as tf
 from attacks import deepfool
 
 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
+
 img_size = 28
 img_chan = 1
 
@@ -247,7 +250,7 @@ def make_deepfool(sess, env, X_data, epochs=1, batch_size=128):
 
 print('\nTraining')
 
-train(sess, env, X_train, y_train, X_valid, y_valid, load=True, epochs=5,
+train(sess, env, X_train, y_train, X_valid, y_valid, load=False, epochs=5,
       name='mnist2')
 
 print('\nEvaluating on clean data')
