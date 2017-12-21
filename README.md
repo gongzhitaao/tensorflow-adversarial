@@ -1,6 +1,8 @@
 Craft Image Adversarial Samples with Tensorflow
 ===============================================
 
+[![DOI](https://zenodo.org/badge/77407674.svg)](https://zenodo.org/badge/latestdoi/77407674)
+
 ## Table of Contents
 
 1. [API](#api)
@@ -10,6 +12,7 @@ Craft Image Adversarial Samples with Tensorflow
 5. [Results](#results)
 6. [Future Work](#future-work)
 7. [Related Work](#related-work)
+8. [Citation](#citation)
 
 This repo contains [adversarial image](https://arxiv.org/abs/1312.6199) crafting algorithms implemented in
 **pure** Tensorflow.  The algorithms can be found in [attacks](attacks) folder.  The
@@ -141,3 +144,18 @@ is *self-contained*.
 ## Related Work
 
 - [openai/cleverhans](https://github.com/openai/cleverhans)
+
+## Citation
+
+You are encouraged to cite this code if you use it for your work.
+
+```bibtex
+@Misc{gong2017-adversarial,
+  author          = {Zhitao Gong},
+  title           = {Adversarial Algorithms in TensorFlow},
+  year            = 2017,
+  month           = dec,
+  doi             = {10.5281/zenodo.1124793},
+  url             = {https://doi.org/10.5281/zenodo.1124793},
+}
+```
