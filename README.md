@@ -24,7 +24,7 @@ return a Tensorflow operation which could be run through `sess.run(...)`.
 - Fast Gradient Method (FGM) [basic](https://arxiv.org/abs/1412.6572/)/[iterative](https://arxiv.org/abs/1607.02533)
 
   ```python
-  fgsm(model, x, eps=0.01, epochs=1, sign=True, clip_min=0.0, clip_max=1.0)
+  fgm(model, x, eps=0.01, epochs=1, sign=True, clip_min=0.0, clip_max=1.0)
   ```
 
   If `sign=True`, use gradient sign as noise, otherwise use gradient values
@@ -43,8 +43,7 @@ return a Tensorflow operation which could be run through `sess.run(...)`.
 - [Jacobian-based Saliency Map Approach (JSMA)](https://arxiv.org/abs/1511.07528)
 
   ```python
-  jsma(model, x, y, epochs=1.0, eps=1., clip_min=0.0, clip_max=1.0,
-       score_fn=lambda t, o: t * tf.abs(o))
+  jsma(model, x, y, epochs=1, eps=1, clip_min=0, clip_max=1, score_fn=lambda t, o: t * tf.abs(o))
   ```
 
   `y` is the target label, could be an integer or a list.  when `epochs` is a
