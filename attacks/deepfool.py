@@ -10,10 +10,10 @@ def deepfool(model, x, noise=False, eta=0.01, epochs=3, batch=False,
 
     The original DeepFool will stop whenever we successfully cross the
     decision boundary.  Thus it might not run total epochs.  In order to force
-    DeepFool to run full epochs, you could pass a negative epochs number.  In
-    that case the DeepFool will run until the max epochs is reached regardless
-    whether we cross the boundary or not.  See
-    https://arxiv.org/abs/1511.04599 for details.
+    DeepFool to run full epochs, you could set batch=True.  In that case the
+    DeepFool will run until the max epochs is reached regardless whether we
+    cross the boundary or not.  See https://arxiv.org/abs/1511.04599 for
+    details.
 
     :param model: Model function.
     :param x: 2D or 4D input tensor.
@@ -23,8 +23,7 @@ def deepfool(model, x, noise=False, eta=0.01, epochs=3, batch=False,
     :param batch: If True, run in batch mode, will always run epochs.
     :param clip_min: Min clip value for output.
     :param clip_max: Max clip value for output.
-    :param min_prob: Minimum probability for adversarial samples.  Ignored
-        when epochs<0.
+    :param min_prob: Minimum probability for adversarial samples.
 
     :return: Adversarials, of the same shape as x.
     """
