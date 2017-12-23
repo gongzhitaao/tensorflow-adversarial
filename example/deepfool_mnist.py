@@ -1,7 +1,5 @@
 """
-Use fast gradient sign method to craft adversarial on MNIST.
-
-Dependencies: python3, tensorflow v1.4, numpy, matplotlib
+Use DeepFool to craft adversarials on MNIST.
 """
 import os
 
