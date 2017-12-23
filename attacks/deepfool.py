@@ -4,43 +4,55 @@ import tensorflow as tf
 __all__ = ['deepfool']
 
 
-def deepfool(model, x, noise=False, eta=0.01, epochs=3, clip_min=0.0,
-             clip_max=1.0, min_prob=0.0):
+def deepfool(model, x, noise=False, eta=0.01, epochs=3, batch=False,
+             clip_min=0.0, clip_max=1.0, min_prob=0.0):
     """DeepFool implementation in Tensorflow.
 
-    See https://arxiv.org/abs/1511.04599 for details.
+    The original DeepFool will stop whenever we successfully cross the
+    decision boundary.  Thus it might not run total epochs.  In order to force
+    DeepFool to run full epochs, you could pass a negative epochs number.  In
+    that case the DeepFool will run until the max epochs is reached regardless
+    whether we cross the boundary or not.  See
+    https://arxiv.org/abs/1511.04599 for details.
 
     :param model: Model function.
     :param x: 2D or 4D input tensor.
     :param noise: Also return the noise if True.
     :param eta: Small overshoot value to cross the boundary.
     :param epochs: Maximum epochs to run.
+    :param batch: If True, run in batch mode, will always run epochs.
     :param clip_min: Min clip value for output.
     :param clip_max: Max clip value for output.
-    :param min_prob: Minimum probability for adversarial samples.
+    :param min_prob: Minimum probability for adversarial samples.  Ignored
+        when epochs<0.
 
     :return: Adversarials, of the same shape as x.
     """
     y = tf.stop_gradient(model(x))
-    ydim = y.get_shape().as_list()[1]
-    if ydim > 1:
-        _deepfool_fn = _deepfoolx
+
+    fns = [[_deepfool2, _deepfool2_batch], [_deepfoolx, _deepfoolx_batch]]
+
+    i = int(y.get_shape().as_list()[1] > 1)
+    j = int(batch)
+    fn = fns[i][j]
+
+    if batch:
+        delta = fn(model, x, eta=eta, epochs=epochs, clip_min=clip_min,
+                   clip_max=clip_max)
     else:
-        _deepfool_fn = _deepfool2
+        def _f(xi):
+            xi = tf.expand_dims(xi, axis=0)
+            z = fn(model, xi, eta=eta, epochs=epochs, clip_min=clip_min,
+                   clip_max=clip_max, min_prob=min_prob)
+            return z[0]
 
-    def _fn(xi):
-        xi = tf.expand_dims(xi, axis=0)
-        noise = _deepfool_fn(model, xi, eta=eta, epochs=epochs,
-                             clip_min=clip_min, clip_max=clip_max,
-                             min_prob=min_prob)
-        return noise[0]
+        delta = tf.map_fn(_f, x, dtype=(tf.float32), back_prop=False,
+                          name='deepfool')
 
-    z = tf.map_fn(_fn, x, dtype=(tf.float32), back_prop=False,
-                  name='deepfool')
-    xadv = tf.clip_by_value(x + z*(1+eta), clip_min, clip_max)
+    xadv = tf.clip_by_value(x + delta*(1+eta), clip_min, clip_max)
 
     if noise:
-        return xadv, z
+        return xadv, delta
     return xadv
 
 
@@ -52,28 +64,59 @@ def _prod(iterable):
 
 
 def _deepfool2(model, x, epochs, eta, clip_min, clip_max, min_prob):
+    """DeepFool for binary classifiers.
+
+    Note that DeepFools that binary classifier outputs +1/-1 instead of 0/1.
+    """
     y0 = tf.stop_gradient(tf.reshape(model(x), [-1])[0])
-    y0 = tf.to_int32(tf.greater(y0, 0.5))
+    y0 = tf.to_int32(tf.greater(y0, 0.0))
 
     def _cond(i, z):
         xadv = tf.clip_by_value(x + z*(1+eta), clip_min, clip_max)
         y = tf.stop_gradient(tf.reshape(model(xadv), [-1])[0])
-        y = tf.to_int32(tf.greater(y, 0.5))
+        y = tf.to_int32(tf.greater(y, 0.0))
         return tf.logical_and(tf.less(i, epochs), tf.equal(y0, y))
 
     def _body(i, z):
         xadv = tf.clip_by_value(x + z*(1+eta), clip_min, clip_max)
         y = tf.reshape(model(xadv), [-1])[0]
         g = tf.gradients(y, xadv)[0]
-        dx = - y * g / tf.norm(g)
+        dx = - y * g / tf.norm(g)  # off by a factor of 1/norm(g)
         return i+1, z+dx
 
     _, noise = tf.while_loop(_cond, _body, [0, tf.zeros_like(x)],
-                             name='_deepfool2_impl', back_prop=False)
+                             name='_deepfool2', back_prop=False)
+    return noise
+
+
+def _deepfool2_batch(model, x, epochs, eta, clip_min, clip_max):
+    """DeepFool for binary classifiers in batch mode.
+    """
+    xshape = x.get_shape().as_list()[1:]
+    dim = _prod(xshape)
+
+    def _cond(i, z):
+        return tf.less(i, epochs)
+
+    def _body(i, z):
+        xadv = tf.clip_by_value(x + z*(1+eta), clip_min, clip_max)
+        y = tf.reshape(model(xadv), [-1])
+        g = tf.gradients(y, xadv)[0]
+        n = tf.norm(tf.reshape(g, [-1, dim]), axis=1)
+        d = tf.reshape(-y / n, [-1] + [1]*len(xshape))
+        dx = g * d
+        return i+1, z+dx
+
+    _, noise = tf.while_loop(_cond, _body, [0, tf.zeros_like(x)],
+                             name='_deepfool2_batch', back_prop=False)
     return noise
 
 
 def _deepfoolx(model, x, epochs, eta, clip_min, clip_max, min_prob):
+    """DeepFool for multi-class classifiers.
+
+    Assumes that the final label is the label with the maximum values.
+    """
     y0 = tf.stop_gradient(model(x))
     y0 = tf.reshape(y0, [-1])
     k0 = tf.argmax(y0)
@@ -117,5 +160,54 @@ def _deepfoolx(model, x, epochs, eta, clip_min, clip_max, min_prob):
         return i+1, z+dx
 
     _, noise = tf.while_loop(_cond, _body, [0, tf.zeros_like(x)],
-                             name='_deepfoolx_impl', back_prop=False)
+                             name='_deepfoolx', back_prop=False)
+    return noise
+
+
+def _deepfoolx_batch(model, x, epochs, eta, clip_min, clip_max):
+    """DeepFool for multi-class classifiers in batch mode.
+    """
+    y0 = tf.stop_gradient(model(x))
+    B, ydim = tf.shape(y0)[0], y0.get_shape().as_list()[1]
+
+    k0 = tf.argmax(y0, axis=1, output_type=tf.int32)
+    k0 = tf.stack((tf.range(B), k0), axis=1)
+
+    xshape = x.get_shape().as_list()[1:]
+    xdim = _prod(xshape)
+
+    perm = list(range(len(xshape) + 2))
+    perm[0], perm[1] = perm[1], perm[0]
+
+    def _cond(i, z):
+        return tf.less(i, epochs)
+
+    def _body(i, z):
+        xadv = tf.clip_by_value(x + z*(1+eta), clip_min, clip_max)
+        y = model(xadv)
+
+        gs = [tf.gradients(y[:, i], xadv)[0] for i in range(ydim)]
+        g = tf.stack(gs, axis=0)
+        g = tf.transpose(g, perm)
+
+        yk = tf.expand_dims(tf.gather_nd(y, k0), axis=1)
+        gk = tf.expand_dims(tf.gather_nd(g, k0), axis=1)
+
+        a = tf.abs(y - yk)
+        b = g - gk
+        c = tf.norm(tf.reshape(b, [-1, ydim, xdim]), axis=-1)
+
+        # Assume 1) 0/0=tf.nan 2) tf.argmin ignores nan
+        score = a / c
+
+        ind = tf.argmin(score, axis=1, output_type=tf.int32)
+        ind = tf.stack((tf.range(B), ind), axis=1)
+
+        si, bi = tf.gather_nd(score, ind), tf.gather_nd(b, ind)
+        si = tf.reshape(si, [-1] + [1]*len(xshape))
+        dx = si * bi
+        return i+1, z+dx
+
+    _, noise = tf.while_loop(_cond, _body, [0, tf.zeros_like(x)],
+                             name='_deepfoolx_batch', back_prop=False)
     return noise
