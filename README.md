@@ -147,15 +147,5 @@ is *self-contained*.
 
 ## Citation
 
-You are encouraged to cite this code if you use it for your work.
-
-```bibtex
-@Misc{gong2017-adversarial,
-  author          = {Zhitao Gong},
-  title           = {Adversarial Algorithms in TensorFlow},
-  year            = 2017,
-  month           = dec,
-  doi             = {10.5281/zenodo.1124793},
-  url             = {https://doi.org/10.5281/zenodo.1124793},
-}
-```
+You are encouraged to cite this code if you use it for your work.  See the above
+Zenodo DOI link.
