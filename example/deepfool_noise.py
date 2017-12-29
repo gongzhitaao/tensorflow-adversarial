@@ -110,7 +110,8 @@ with tf.variable_scope('model'):
 
 with tf.variable_scope('model', reuse=True):
     env.adv_epochs = tf.placeholder(tf.int32, (), name='adv_epochs')
-    env.xadv = deepfool(model, env.x, epochs=env.adv_epochs)
+    env.noise = deepfool(model, env.x, epochs=env.adv_epochs, batch=True,
+                         noise=True)
 
 print('\nInitializing graph')
 
@@ -216,18 +217,18 @@ def make_deepfool(sess, env, X_data, epochs=1, eps=0.01, batch_size=128):
 
     n_sample = X_data.shape[0]
     n_batch = int((n_sample + batch_size - 1) / batch_size)
-    X_adv = np.empty_like(X_data)
+    X_noise = np.empty_like(X_data)
 
     for batch in range(n_batch):
         print(' batch {0}/{1}'.format(batch + 1, n_batch), end='\r')
         start = batch * batch_size
         end = min(n_sample, start + batch_size)
-        adv = sess.run(env.xadv, feed_dict={env.x: X_data[start:end],
-                                            env.adv_epochs: epochs})
-        X_adv[start:end] = adv
+        noise = sess.run(env.noise, feed_dict={env.x: X_data[start:end],
+                                               env.adv_epochs: epochs})
+        X_noise[start:end] = noise
     print()
 
-    return X_adv
+    return X_noise
 
 
 print('\nTraining')
@@ -241,7 +242,9 @@ evaluate(sess, env, X_test, y_test)
 
 print('\nGenerating adversarial data')
 
-X_adv = make_deepfool(sess, env, X_test, epochs=3)
+X_noise = make_deepfool(sess, env, X_test, epochs=3)
+X_adv = np.clip(X_test + 1.02*X_noise, 0, 1)
+print(np.min(X_noise), np.max(X_noise))
 
 print('\nEvaluating on adversarial data')
 

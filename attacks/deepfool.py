@@ -48,10 +48,11 @@ def deepfool(model, x, noise=False, eta=0.01, epochs=3, batch=False,
         delta = tf.map_fn(_f, x, dtype=(tf.float32), back_prop=False,
                           name='deepfool')
 
-    xadv = tf.clip_by_value(x + delta*(1+eta), clip_min, clip_max)
-
     if noise:
-        return xadv, delta
+        return delta
+
+    xadv = tf.stop_gradient(x + delta*(1+eta))
+    xadv = tf.clip_by_value(xadv, clip_min, clip_max)
     return xadv
 
 

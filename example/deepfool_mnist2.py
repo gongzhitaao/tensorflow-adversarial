@@ -228,9 +228,9 @@ def predict(sess, env, X_data, batch_size=128):
 
 def make_deepfool(sess, env, X_data, epochs=1, batch_size=128):
     """
-    Generate FGSM by running env.xadv.
+    Generate DeepFool by running env.xadv.
     """
-    print('\nMaking adversarials via FGSM')
+    print('\nMaking adversarials via DeepFool')
 
     n_sample = X_data.shape[0]
     n_batch = int((n_sample + batch_size - 1) / batch_size)
