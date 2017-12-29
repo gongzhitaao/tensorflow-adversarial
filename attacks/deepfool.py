@@ -81,7 +81,7 @@ def _deepfool2(model, x, epochs, eta, clip_min, clip_max, min_prob):
         xadv = tf.clip_by_value(x + z*(1+eta), clip_min, clip_max)
         y = tf.reshape(model(xadv), [-1])[0]
         g = tf.gradients(y, xadv)[0]
-        dx = - y * g / tf.norm(g)  # off by a factor of 1/norm(g)
+        dx = - y * g / (tf.norm(g) + 1e-10)  # off by a factor of 1/norm(g)
         return i+1, z+dx
 
     _, noise = tf.while_loop(_cond, _body, [0, tf.zeros_like(x)],
@@ -102,7 +102,7 @@ def _deepfool2_batch(model, x, epochs, eta, clip_min, clip_max):
         xadv = tf.clip_by_value(x + z*(1+eta), clip_min, clip_max)
         y = tf.reshape(model(xadv), [-1])
         g = tf.gradients(y, xadv)[0]
-        n = tf.norm(tf.reshape(g, [-1, dim]), axis=1)
+        n = tf.norm(tf.reshape(g, [-1, dim]), axis=1) + 1e-10
         d = tf.reshape(-y / n, [-1] + [1]*len(xshape))
         dx = g * d
         return i+1, z+dx
