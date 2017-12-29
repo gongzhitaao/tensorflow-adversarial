@@ -104,6 +104,10 @@ is *self-contained*.
 
 ## Results
 
+- Comparison of all implemented algorithms.
+
+  ![img](img/compare.png)
+
 - Fast gradient sign method adversarial on MNIST.
 
   ![img](img/fgsm_mnist.png)
