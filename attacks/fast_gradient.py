@@ -86,8 +86,8 @@ def fgmt(model, x, y=None, eps=0.01, epochs=1, sign=True, clip_min=0.,
     xadv = tf.identity(x)
 
     ybar = model(xadv)
-    yshape = ybar.get_shape().as_list()
-    n, ydim = yshape[0], yshape[1]
+    ydim = ybar.get_shape().as_list()[1]
+    n = tf.shape(ybar)[0]
 
     if y is None:
         indices = tf.argmin(ybar, axis=1)
