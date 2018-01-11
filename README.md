@@ -16,7 +16,7 @@ Craft Image Adversarial Samples with Tensorflow
 
 This repo contains [adversarial image](https://arxiv.org/abs/1312.6199) crafting algorithms implemented in
 **pure** Tensorflow.  The algorithms can be found in [attacks](attacks) folder.  The
-implementation adheres to the principle **tensor-in, tensor-out***.  They all
+implementation adheres to the principle **tensor-in, tensor-out**.  They all
 return a Tensorflow operation which could be run through `sess.run(...)`.
 
 ## API
@@ -59,12 +59,12 @@ return a Tensorflow operation which could be run through `sess.run(...)`.
   deepfool(model, x, noise=False, eta=0.01, epochs=3, clip_min=0.0, clip_max=1.0, min_prob=0.0)
   ```
 
-  If `noise` is `True`, the return value is `xadv, noise`, otherwise only `xadv`
-  is returned.  Note that in my implementation, the noise if calculated as
+  If `noise` is `True`, the return value is `noise`, otherwise only `xadv` is
+  returned.  Note that in my implementation, the noise if calculated as
   `f/||w|| * w` instead of `f/||w|| * w/||w||`, where `||w||` is the L2 norm.
-  It seems that `||w||` is so small such that noise will explode when adding
-  it.  In the [original author's implementation](https://github.com/LTS4/DeepFool/blob/master/Python/deepfool.py#L71), they add a small value 1e-4
-  for numeric stability, I guess we might have similar issue here.  Anyway, this
+  It seems that `||w||` is so small such that noise will explode when adding it.
+  In the [original author's implementation](https://github.com/LTS4/DeepFool/blob/master/Python/deepfool.py#L71), they add a small value 1e-4 for
+  numeric stability, I guess we might have similar issue here.  Anyway, this
   factor does not change the direction of the noise, and in practice, the
   adversarial noise is still subtle and hard to notice.
 
@@ -77,7 +77,9 @@ return a Tensorflow operation which could be run through `sess.run(...)`.
 ## The `model`
 
 Notice that we have `model` as the first parameter for every method.  The
-`model` is a wrapper function.  It should have the following signature
+`model` is a wrapper function to create the target model computation graph.  The
+first parameter has to be the input `x`, other parameters may be added when
+necessary, but they need to have default values.
 
 ```python
 def model(x, logits=False):
@@ -88,9 +90,6 @@ def model(x, logits=False):
     return y, logits
   return y
 ```
-
-We need the logits because some algorithms (FGSM and TGSM) rely on the logits to
-compute the loss.
 
 ## How to Use
 
@@ -136,13 +135,13 @@ is *self-contained*.
 
 ## Future Work
 
-- [ ] Add ImageNet examples
-- [x] Add Deepfool
-- [ ] Add attack method from https://arxiv.org/abs/1507.00677
-- [ ] Add attack method from https://arxiv.org/abs/1608.04644
-- [ ] Add houdini attack from https://arxiv.org/abs/1707.05373
-- [ ] Add benchmark for various defense methods.  There are so many of them,
-  probably need a good survey, e.g. https://arxiv.org/abs/1705.07263.
+- [ ] Moment iterative attack https://arxiv.org/abs/1710.06081
+- [ ] Virtual adversarial https://arxiv.org/abs/1507.00677
+- [ ] CarliniWagner (CW) https://arxiv.org/abs/1608.04644
+- [ ] Elastic net https://arxiv.org/abs/1709.04114
+- [ ] MadryEtAl https://arxiv.org/abs/1706.06083
+- [ ] Fast feature https://arxiv.org/abs/1511.05122
+- [ ] Houdini https://arxiv.org/abs/1707.05373
 
 ## Related Work
 
