@@ -68,6 +68,24 @@ return a Tensorflow operation which could be run through `sess.run(...)`.
   factor does not change the direction of the noise, and in practice, the
   adversarial noise is still subtle and hard to notice.
 
+- [CW](https://arxiv.org/abs/1608.04644)
+
+  ```python
+  cw(model, x, y=None, eps=1.0, ord_=2, T=2,
+     optimizer=tf.train.AdamOptimizer(learning_rate=0.1), alpha=0.9,
+     min_prob=0, clip=(0.0, 1.0)):
+  ```
+
+  Note that CW is a bit different from the above gradient-based methods in that
+  it is an optimization-based attack.  Thus, it returns a tuple, `(train_op,
+  xadv, noise)`.  After running `train_op` for desired epochs, run `xadv` to get
+  the adversarial images.  Please note that it is OPTIMIZATION-BASED method,
+  which means it is tricky.  You probably need to search for the best parameter
+  configuration per image.  Otherwise, you will NOT get the amazingly good
+  result reported in the paper.  It took me a couple of days to realize that the
+  reason for my crappy adversarial images was not that my implementation was
+  wrong, but rather, my learning rate was too small!!
+
 ## Dependencies
 
 1. Python3, samples codes uses many of the Python3 features.
@@ -118,6 +136,11 @@ is *self-contained*.
 - DeepFool generate adversarial images.
 
   ![img](img/deepfool_mnist.png)
+
+- CW L2 generates targeted attack on a random select image, with binary search
+  for the best `eps` value.
+
+  ![img](img/cw2_mnist_binary_search.png)
 
 - JSMA generates cross label adversarial on MNIST.  Labels on the left are the
   true labels, labels on the bottom are predicted labels by the model.

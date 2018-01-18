@@ -1,7 +1,5 @@
 """
 Use CW method to craft adversarial on MNIST.
-
-Dependencies: python3, tensorflow v1.4, numpy, matplotlib
 """
 import os
 from timeit import default_timer
@@ -380,5 +378,5 @@ fig.colorbar(mappable=dummy, cax=ax, ticks=[-1, 0, 1], ticklocation='right')
 print('\nSaving figure')
 
 gs.tight_layout(fig)
-os.makedirs('../out', exist_ok=True)
-plt.savefig('../out/cw8_mnist.png')
+os.makedirs('img/', exist_ok=True)
+plt.savefig('img/cw8_mnist.png')

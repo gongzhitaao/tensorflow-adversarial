@@ -8,7 +8,8 @@ Note that this is time consuming if you want to do this over the entire
 dataset.
 
 I create this demo mainly to demonstrate the correctness of my implementation
-of CW.  Since I do not get very good results with hand-chosen eps value.
+of CW.  Since I do not get very good results with hand-chosen eps value and
+batched attacking.
 """
 import os
 from timeit import default_timer
@@ -37,6 +38,7 @@ LEARNING_RATE = 1e-2
 BINARY_EPOCHS = 10
 EPOCHS = 1000
 BOUND = (1e-6, 1)
+
 
 class Timer(object):
     def __init__(self, msg='Starting.....', timer=default_timer, factor=1,
@@ -284,8 +286,6 @@ def cw_binary_search(env, image, target, epochs=1, bound=(1e-8, 1e2),
     print('\nMaking adversarials via CW')
 
     mindist = float('inf')
-    besteps = -1
-
     advimg, advprob = None, -1
 
     lo, hi = bound
@@ -316,7 +316,6 @@ def cw_binary_search(env, image, target, epochs=1, bound=(1e-8, 1e2),
                 dist = np.linalg.norm(xadv.flatten()-image.flatten())
                 if mindist < 0 or dist < mindist:
                     mindist = dist
-                    besteps = eps
                     advimg = xadv
                     advprob = prob
                 hi = eps

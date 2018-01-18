@@ -1,7 +1,10 @@
 """
 Use CW method to craft adversarial on MNIST.
 
-Dependencies: python3, tensorflow v1.4, numpy, matplotlib
+Note that instead of find the optimized image for each image, we do a batched
+attack without binary search for the best possible solution.  Thus, the result
+is worse than reported in the original paper.  To achieve the best result
+requires more computation, as demonstrated in another example.
 """
 import os
 from timeit import default_timer
@@ -24,7 +27,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 img_size = 28
 img_chan = 1
 n_classes = 10
-batch_size = 8
+batch_size = 32
 
 
 class Timer(object):
@@ -297,7 +300,7 @@ def make_cw(env, X_data, epochs=1, eps=0.1, batch_size=batch_size):
 
 print('\nTraining')
 
-train(env, X_train, y_train, X_valid, y_valid, load=True, epochs=5,
+train(env, X_train, y_train, X_valid, y_valid, load=False, epochs=5,
       name='mnist')
 
 print('\nEvaluating on clean data')
@@ -381,5 +384,5 @@ fig.colorbar(mappable=dummy, cax=ax, ticks=[-1, 0, 1], ticklocation='right')
 print('\nSaving figure')
 
 gs.tight_layout(fig)
-os.makedirs('../out', exist_ok=True)
-plt.savefig('../out/cw2_mnist.png')
+os.makedirs('img', exist_ok=True)
+plt.savefig('img/cw2_mnist.png')

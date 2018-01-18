@@ -21,7 +21,8 @@ def cw(model, x, y=None, eps=1.0, ord_=2, T=2,
     Please note that CW is a optimization process, so it is tricky.  There are
     lots of hyper-parameters to tune in order to get the best result.  The
     binary search process for the best eps values is omitted here.  You could
-    do grid search to find the best parameter configuration, if you like.
+    do grid search to find the best parameter configuration, if you like.  I
+    demonstrate binary search for the best result in an example code.
 
     :param model: The model wrapper.
     :param x: The input clean sample, usually a placeholder.  NOTE that the
@@ -46,9 +47,11 @@ def cw(model, x, y=None, eps=1.0, ord_=2, T=2,
     :param clip: A tuple (clip_min, clip_max), which denotes the range of
         values in x.
 
-    :return: A tuple (train_op, xadv).  Run train_op for some epochs to
+    :return: A tuple (train_op, xadv, noise).  Run train_op for some epochs to
              generate the adversarial image, then run xadv to get the final
-             adversarial image.
+             adversarial image.  Noise is in the sigmoid-space instead of the
+             input space.  It is returned because we need to clear noise
+             before each batched attacks.
     """
     xshape = x.get_shape().as_list()
     noise = tf.get_variable('noise', xshape, tf.float32,
