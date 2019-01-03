@@ -1,6 +1,8 @@
 Craft Image Adversarial Samples with Tensorflow
 ===============================================
 
+*THE CODE IS PROVIDED AS IT-IS, MAY NOT UPDATE IT ANYMORE.  HOPEFULLY IT IS STILL HELPFUL.*
+
 [![DOI](https://zenodo.org/badge/77407674.svg)](https://zenodo.org/badge/latestdoi/77407674)
 
 ## Table of Contents
@@ -10,7 +12,7 @@ Craft Image Adversarial Samples with Tensorflow
 3. [The `model`](#the-model)
 4. [How to Use](#how-to-use)
 5. [Results](#results)
-6. [Future Work](#future-work)
+6. [More Attacks](#more-attacks) *(outdated)*
 7. [Related Work](#related-work)
 8. [Citation](#citation)
 
@@ -156,15 +158,17 @@ is *self-contained*.
 
   ![img](img/jsma_mnist_scratch.png)
 
-## Future Work
+## More Attacks
 
-- [ ] Moment iterative attack https://arxiv.org/abs/1710.06081
-- [ ] Virtual adversarial https://arxiv.org/abs/1507.00677
-- [ ] CarliniWagner (CW) https://arxiv.org/abs/1608.04644
-- [ ] Elastic net https://arxiv.org/abs/1709.04114
-- [ ] MadryEtAl https://arxiv.org/abs/1706.06083
-- [ ] Fast feature https://arxiv.org/abs/1511.05122
-- [ ] Houdini https://arxiv.org/abs/1707.05373
+The list is *outdated*.
+
+- Moment iterative attack https://arxiv.org/abs/1710.06081
+- Virtual adversarial https://arxiv.org/abs/1507.00677
+- CarliniWagner (CW) https://arxiv.org/abs/1608.04644
+- Elastic net https://arxiv.org/abs/1709.04114
+- MadryEtAl https://arxiv.org/abs/1706.06083
+- Fast feature https://arxiv.org/abs/1511.05122
+- Houdini https://arxiv.org/abs/1707.05373
 
 ## Related Work
 
